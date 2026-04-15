@@ -1,0 +1,4 @@
+#Wed Apr 15 23:37:12 JST 2026
+base.0=H\:\\Downloads\\TrainingLog\\TrainingLog\\app\\build\\intermediates\\dex\\debugAndroidTest\\mergeProjectDexDebugAndroidTest\\0\\classes.dex
+path.0=0/classes.dex
+renamed.0=classes.dex

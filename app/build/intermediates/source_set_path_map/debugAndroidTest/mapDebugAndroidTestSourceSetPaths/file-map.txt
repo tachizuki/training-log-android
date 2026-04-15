@@ -1,0 +1,4 @@
+com.traininglog.app.test.app-androidTest-0 H:\Downloads\TrainingLog\TrainingLog\app\build\generated\res\resValues\androidTest\debug
+com.traininglog.app.test.app-mergeDebugAndroidTestResources-1 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.traininglog.app.test.app-mergeDebugAndroidTestResources-2 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.traininglog.app.test.app-debugAndroidTest-3 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
