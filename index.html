@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -240,6 +241,7 @@
   .analysis-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; cursor: pointer; }
   .analysis-title { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-muted); }
   .analysis-toggle { font-size: 18px; color: var(--text-muted); transition: transform 0.2s; }
+  .analysis-date-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; background: rgba(232,255,0,0.1); border: 1px solid rgba(232,255,0,0.3); border-radius: 10px; font-size: 11px; color: var(--accent); font-weight: 700; vertical-align: middle; }
   .analysis-toggle.open { transform: rotate(180deg); }
   .analysis-body { display: none; }
   .analysis-body.open { display: block; }
@@ -1025,7 +1027,7 @@ if (absDiff < 0.15) {
       trainedDays.push({when:'2日前', muscles: prev2Rec.muscles});
     }
     for (const td of trainedDays) {
-      const bigMuscles = td.muscles.filter(m=>['脚','背中','胸'].includes(m));
+      const bigMuscles = td.muscles.filter(m=>['脚','足','背中','胸'].includes(m));
       if (bigMuscles.length > 0) {
         items.push({icon:'💪', cls:'warn', text:`<strong>${td.when}に${td.muscles.join('・')}</strong>のトレーニング。大筋群の筋損傷回復で炎症・水分保持が起きやすく、翌朝〜2日後まで体重が0.3〜0.8kg増える場合があります。`});
       } else {
@@ -1078,13 +1080,18 @@ if (absDiff < 0.15) {
   function buildAnalysisHTML(r, idx) {
     const items = analyzeWeightChange(r);
     if (items.length === 0) return '';
+    const d = new Date(r.date+'T00:00:00');
+    const dateLabel = `${d.getMonth()+1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})`;
     const itemsHTML = items.map(item =>
       `<div class="analysis-item"><span class="analysis-icon">${item.icon}</span><span class="analysis-text ${item.cls}">${item.text}</span></div>`
     ).join('');
     return `
       <div class="analysis-card">
         <div class="analysis-header" onclick="toggleAnalysis(${idx})">
-          <span class="analysis-title">🔍 体重変動分析</span>
+          <div>
+            <span class="analysis-title">🔍 体重変動分析</span>
+            <span class="analysis-date-badge">${dateLabel}の体重変動</span>
+          </div>
           <span class="analysis-toggle" id="atoggle-${idx}">▼</span>
         </div>
         <div class="analysis-body" id="abody-${idx}">
