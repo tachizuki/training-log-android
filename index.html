@@ -534,6 +534,7 @@
       <div class="edit-group"><label class="edit-label">カロリー (kcal)</label><input type="number" class="edit-input" id="edit-kcal" placeholder="自動計算" readonly style="opacity:0.6"></div>
       <div class="edit-group"><label class="edit-label">塩分 (g)</label><input type="number" class="edit-input" id="edit-salt" step="0.1" placeholder="5.0"></div>
       <div class="edit-group"><label class="edit-label">日サロ (分)</label><input type="number" class="edit-input" id="edit-salon" placeholder="0"></div>
+      <div class="edit-group full"><label class="edit-label">水分摂取量 (ml)</label><input type="number" class="edit-input" id="edit-water" placeholder="3000"></div>
       <div class="edit-group full">
         <label class="edit-label">筋トレ部位</label>
         <div class="edit-muscle-grid">
@@ -1076,7 +1077,7 @@ if (absDiff < 0.15) {
     return items;
   }
 
-  function buildAnalysisHTML(r, idx) {
+  function buildAnalysisHTML(r, dateKey) {
     const items = analyzeWeightChange(r);
     if (items.length === 0) return '';
     const d = new Date(r.date+'T00:00:00');
@@ -1084,24 +1085,25 @@ if (absDiff < 0.15) {
     const itemsHTML = items.map(item =>
       `<div class="analysis-item"><span class="analysis-icon">${item.icon}</span><span class="analysis-text ${item.cls}">${item.text}</span></div>`
     ).join('');
+    const safeKey = dateKey.replace(/-/g,'');
     return `
       <div class="analysis-card">
-        <div class="analysis-header" onclick="toggleAnalysis(${idx})">
+        <div class="analysis-header" onclick="toggleAnalysis('${safeKey}')">
           <div>
             <span class="analysis-title">🔍 体重変動分析</span>
             <span class="analysis-date-badge">${dateLabel}の体重変動</span>
           </div>
-          <span class="analysis-toggle" id="atoggle-${idx}">▼</span>
+          <span class="analysis-toggle" id="atoggle-${safeKey}">▼</span>
         </div>
-        <div class="analysis-body" id="abody-${idx}">
+        <div class="analysis-body" id="abody-${safeKey}">
           ${itemsHTML}
         </div>
       </div>`;
   }
 
-  function toggleAnalysis(idx) {
-    const body = document.getElementById('abody-'+idx);
-    const toggle = document.getElementById('atoggle-'+idx);
+  function toggleAnalysis(dateKey) {
+    const body = document.getElementById('abody-'+dateKey);
+    const toggle = document.getElementById('atoggle-'+dateKey);
     body.classList.toggle('open');
     toggle.classList.toggle('open');
   }
@@ -1110,7 +1112,7 @@ if (absDiff < 0.15) {
     const list=document.getElementById('records-list');
     const filtered=getFilteredRecords();
     if(filtered.length===0){list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">記録がありません</div></div>';return;}
-    list.innerHTML=filtered.map((r,idx)=>{
+    list.innerHTML=filtered.map((r)=>{
       const d=new Date(r.date+'T00:00:00');
       const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} (${['日','月','火','水','木','金','土'][d.getDay()]})`;
       const tags=[];
@@ -1123,7 +1125,7 @@ if (absDiff < 0.15) {
       if(r.sleep) tags.push(`<span class="tag tag-sleep">😴 ${r.sleep}h</span>`);
       if(r.salon) tags.push(`<span class="tag tag-salon">🌞 ${r.salon}分</span>`);
       const memo=r.memo?`<div class="record-memo">${r.memo}</div>`:'';
-      const analysis = buildAnalysisHTML(r, idx);
+      const analysis = buildAnalysisHTML(r, r.date);
       return `<div class="record-card">
         <div class="record-date">${ds}<button class="record-edit-btn" onclick="openEditModal('${r.date}')">編集</button></div>
         <div class="record-macros">
@@ -1172,6 +1174,9 @@ if (absDiff < 0.15) {
     document.getElementById('edit-salt').value = r.salt||'';
     document.getElementById('edit-salon').value = r.salon||'';
     document.getElementById('edit-memo').value = r.memo||'';
+    // 水分データをwaterDataから読み込む
+    const wd = waterData[dateKey] || {total:0, log:[]};
+    document.getElementById('edit-water').value = wd.total > 0 ? wd.total : '';
     editMuscles = [...(r.muscles||[])];
     document.querySelectorAll('.edit-muscle-btn').forEach(b=>{
       b.classList.toggle('selected', editMuscles.includes(b.dataset.muscle));
@@ -1215,6 +1220,13 @@ if (absDiff < 0.15) {
       memo: document.getElementById('edit-memo').value.trim(),
     };
     localStorage.setItem('training_records', JSON.stringify(records));
+    // 水分データを保存
+    const editWaterVal = parseInt(document.getElementById('edit-water').value)||0;
+    if (editWaterVal > 0) {
+      if (!waterData[dateKey]) waterData[dateKey] = {total:0, log:[]};
+      waterData[dateKey].total = editWaterVal;
+      localStorage.setItem('water_data', JSON.stringify(waterData));
+    }
     closeEditModal();
     renderList();
     if(currentFilter==='week'||currentFilter==='month') renderStats();
