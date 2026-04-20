@@ -2221,6 +2221,25 @@
                     }
                 },
                 {
+                    "source": "H:\\projects\\training-log-android\\app\\src\\main\\res\\values\\themes.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "12",
+                        "endOffsets": "333"
+                    },
+                    "to": {
+                        "startLines": "2077",
+                        "startColumns": "4",
+                        "startOffsets": "129659",
+                        "endLines": "2081",
+                        "endColumns": "12",
+                        "endOffsets": "129937"
+                    }
+                },
+                {
                     "source": "C:\\Users\\tanab\\.gradle\\caches\\8.9\\transforms\\1e1c04764fbd580c73d1dd6de8548829\\transformed\\lifecycle-viewmodel-2.6.2\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -2255,22 +2274,20 @@
                     }
                 },
                 {
-                    "source": "H:\\Downloads\\TrainingLog\\TrainingLog\\app\\src\\main\\res\\values\\themes.xml",
+                    "source": "H:\\projects\\training-log-android\\app\\src\\main\\res\\values\\strings.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
                         "startOffsets": "55",
-                        "endLines": "6",
-                        "endColumns": "12",
-                        "endOffsets": "333"
+                        "endColumns": "48",
+                        "endOffsets": "99"
                     },
                     "to": {
-                        "startLines": "2077",
+                        "startLines": "661",
                         "startColumns": "4",
-                        "startOffsets": "129659",
-                        "endLines": "2081",
-                        "endColumns": "12",
-                        "endOffsets": "129937"
+                        "startOffsets": "35255",
+                        "endColumns": "48",
+                        "endOffsets": "35299"
                     }
                 },
                 {
@@ -2307,23 +2324,6 @@
                         "startOffsets": "32825",
                         "endColumns": "53",
                         "endOffsets": "32874"
-                    }
-                },
-                {
-                    "source": "H:\\Downloads\\TrainingLog\\TrainingLog\\app\\src\\main\\res\\values\\strings.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "48",
-                        "endOffsets": "99"
-                    },
-                    "to": {
-                        "startLines": "661",
-                        "startColumns": "4",
-                        "startOffsets": "35255",
-                        "endColumns": "48",
-                        "endOffsets": "35299"
                     }
                 },
                 {

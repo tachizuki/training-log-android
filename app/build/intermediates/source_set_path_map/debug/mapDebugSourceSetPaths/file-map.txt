@@ -19,10 +19,10 @@ com.traininglog.app-annotation-experimental-1.4.1-17 C:\Users\tanab\.gradle\cach
 com.traininglog.app-profileinstaller-1.4.0-18 C:\Users\tanab\.gradle\caches\8.9\transforms\d97059b341fc8922128295ba7e7d6b3d\transformed\profileinstaller-1.4.0\res
 com.traininglog.app-appcompat-resources-1.7.0-19 C:\Users\tanab\.gradle\caches\8.9\transforms\e16c9c3c41c633cf4231022dab480a70\transformed\appcompat-resources-1.7.0\res
 com.traininglog.app-lifecycle-runtime-2.6.2-20 C:\Users\tanab\.gradle\caches\8.9\transforms\fc0a63a8622e60c051f6dd81f49e16ef\transformed\lifecycle-runtime-2.6.2\res
-com.traininglog.app-pngs-21 H:\Downloads\TrainingLog\TrainingLog\app\build\generated\res\pngs\debug
-com.traininglog.app-resValues-22 H:\Downloads\TrainingLog\TrainingLog\app\build\generated\res\resValues\debug
-com.traininglog.app-packageDebugResources-23 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
-com.traininglog.app-packageDebugResources-24 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
-com.traininglog.app-debug-25 H:\Downloads\TrainingLog\TrainingLog\app\build\intermediates\merged_res\debug\mergeDebugResources
-com.traininglog.app-debug-26 H:\Downloads\TrainingLog\TrainingLog\app\src\debug\res
-com.traininglog.app-main-27 H:\Downloads\TrainingLog\TrainingLog\app\src\main\res
+com.traininglog.app-pngs-21 H:\projects\training-log-android\app\build\generated\res\pngs\debug
+com.traininglog.app-resValues-22 H:\projects\training-log-android\app\build\generated\res\resValues\debug
+com.traininglog.app-packageDebugResources-23 H:\projects\training-log-android\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.traininglog.app-packageDebugResources-24 H:\projects\training-log-android\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.traininglog.app-debug-25 H:\projects\training-log-android\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.traininglog.app-debug-26 H:\projects\training-log-android\app\src\debug\res
+com.traininglog.app-main-27 H:\projects\training-log-android\app\src\main\res

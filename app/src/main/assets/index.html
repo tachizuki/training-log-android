@@ -68,7 +68,6 @@
   .btn-record { background: var(--accent); color: var(--bg); }
   .btn-water { background: rgba(0,212,255,0.12); color: var(--accent2); border: 1px solid rgba(0,212,255,0.4); }
   .btn-view { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-  .btn-import { background: transparent; color: var(--text-muted); border: 1px solid var(--border); font-size: 16px; }
 
   .screen { display: none; min-height: 100vh; padding: 0 0 80px 0; }
   .screen.active { display: block; }
@@ -298,7 +297,7 @@
       <button class="btn-main btn-record" onclick="showScreen('record-screen')">記録する</button>
       <button class="btn-main btn-water" onclick="showScreen('water-screen'); renderWater()">💧 水分を記録する</button>
       <button class="btn-main btn-view" onclick="showScreen('view-screen'); renderView()">表示する</button>
-      <button class="btn-main btn-import" onclick="location.href='file:///android_asset/import_data.html'">📥 過去データをインポート</button>
+
     </div>
   </div>
 </div>
@@ -925,14 +924,17 @@
     const prev2Water = waterData[prev2Key];
 
     const items = [];
-    if (!r.weight || !prevRec || !prevRec.weight) return items;
+    if (!r.weight || !prevRec) return items;
 
-    const diff = r.weight - prevRec.weight;
-    const absDiff = Math.abs(diff);
-    const sign = diff > 0 ? '+' : '';
+    const diff = prevRec.weight ? r.weight - prevRec.weight : null;
+    const absDiff = diff !== null ? Math.abs(diff) : null;
+    const sign = diff !== null && diff > 0 ? '+' : '';
 
     // ① 体重変動サマリー
-    if (absDiff < 0.15) {
+    if (diff === null) {
+      items.push({icon:'⚖️', cls:'', text:`前日の体重が未記録のため変動計算はできませんが、前日の食事・トレーニングの影響を分析します。`});
+    } else
+if (absDiff < 0.15) {
       items.push({icon:'⚖️', cls:'', text:`前日比 <strong>±${absDiff.toFixed(2)}kg</strong>。ほぼ横ばい。水分の誤差範囲内。`});
     } else if (diff < 0) {
       items.push({icon:'📉', cls:'good', text:`前日比 <strong>${sign}${diff.toFixed(2)}kg</strong> 減少。良いトレンドです。`});
@@ -1014,13 +1016,20 @@
       }
     }
 
-    // ⑨ 前日の筋トレ → 筋肉の炎症・水分保持
+    // ⑨ 筋トレ（前日・2日前）→ 炎症・水分保持は24〜48h続く
+    const trainedDays = [];
     if (prevRec.trained && prevRec.muscles && prevRec.muscles.length > 0) {
-      const bigMuscles = prevRec.muscles.filter(m=>['脚','背中','胸'].includes(m));
+      trainedDays.push({when:'前日', muscles: prevRec.muscles});
+    }
+    if (prev2Rec && prev2Rec.trained && prev2Rec.muscles && prev2Rec.muscles.length > 0) {
+      trainedDays.push({when:'2日前', muscles: prev2Rec.muscles});
+    }
+    for (const td of trainedDays) {
+      const bigMuscles = td.muscles.filter(m=>['脚','背中','胸'].includes(m));
       if (bigMuscles.length > 0) {
-        items.push({icon:'💪', cls:'', text:`前日に<strong>${prevRec.muscles.join('・')}</strong>のトレーニング。大筋群は筋損傷の回復で炎症・水分保持が起きやすく、翌朝体重が0.3〜0.8kg増える場合があります。`});
+        items.push({icon:'💪', cls:'warn', text:`<strong>${td.when}に${td.muscles.join('・')}</strong>のトレーニング。大筋群の筋損傷回復で炎症・水分保持が起きやすく、翌朝〜2日後まで体重が0.3〜0.8kg増える場合があります。`});
       } else {
-        items.push({icon:'💪', cls:'', text:`前日に<strong>${prevRec.muscles.join('・')}</strong>のトレーニング。小筋群なので体重への影響は軽微。`});
+        items.push({icon:'💪', cls:'', text:`<strong>${td.when}に${td.muscles.join('・')}</strong>のトレーニング。小筋群なので体重への影響は軽微。`});
       }
     }
 

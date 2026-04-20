@@ -69,6 +69,7 @@
   .btn-water { background: rgba(0,212,255,0.12); color: var(--accent2); border: 1px solid rgba(0,212,255,0.4); }
   .btn-view { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
   .btn-import { background: transparent; color: var(--text-muted); border: 1px solid var(--border); font-size: 16px; }
+  .btn-reset { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 16px; }
 
   .screen { display: none; min-height: 100vh; padding: 0 0 80px 0; }
   .screen.active { display: block; }
@@ -298,7 +299,8 @@
       <button class="btn-main btn-record" onclick="showScreen('record-screen')">記録する</button>
       <button class="btn-main btn-water" onclick="showScreen('water-screen'); renderWater()">💧 水分を記録する</button>
       <button class="btn-main btn-view" onclick="showScreen('view-screen'); renderView()">表示する</button>
-      <button class="btn-main btn-import" onclick="location.href='file:///android_asset/import_data.html'">📥 過去データをインポート</button>
+      <button class="btn-main btn-import" onclick="importData()">📥 過去データをインポート</button>
+      <button class="btn-main btn-reset" onclick="resetAllData()">🗑️ 全データをリセット</button>
     </div>
   </div>
 </div>
@@ -1014,13 +1016,20 @@
       }
     }
 
-    // ⑨ 前日の筋トレ → 筋肉の炎症・水分保持
+    // ⑨ 筋トレ（前日・2日前）→ 炎症・水分保持は24〜48h続く
+    const trainedDays = [];
     if (prevRec.trained && prevRec.muscles && prevRec.muscles.length > 0) {
-      const bigMuscles = prevRec.muscles.filter(m=>['脚','背中','胸'].includes(m));
+      trainedDays.push({when:'前日', muscles: prevRec.muscles});
+    }
+    if (prev2Rec && prev2Rec.trained && prev2Rec.muscles && prev2Rec.muscles.length > 0) {
+      trainedDays.push({when:'2日前', muscles: prev2Rec.muscles});
+    }
+    for (const td of trainedDays) {
+      const bigMuscles = td.muscles.filter(m=>['脚','背中','胸'].includes(m));
       if (bigMuscles.length > 0) {
-        items.push({icon:'💪', cls:'', text:`前日に<strong>${prevRec.muscles.join('・')}</strong>のトレーニング。大筋群は筋損傷の回復で炎症・水分保持が起きやすく、翌朝体重が0.3〜0.8kg増える場合があります。`});
+        items.push({icon:'💪', cls:'warn', text:`<strong>${td.when}に${td.muscles.join('・')}</strong>のトレーニング。大筋群の筋損傷回復で炎症・水分保持が起きやすく、翌朝〜2日後まで体重が0.3〜0.8kg増える場合があります。`});
       } else {
-        items.push({icon:'💪', cls:'', text:`前日に<strong>${prevRec.muscles.join('・')}</strong>のトレーニング。小筋群なので体重への影響は軽微。`});
+        items.push({icon:'💪', cls:'', text:`<strong>${td.when}に${td.muscles.join('・')}</strong>のトレーニング。小筋群なので体重への影響は軽微。`});
       }
     }
 
@@ -1224,6 +1233,67 @@
     t.classList.toggle('blue', blue);
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),2000);
+  }
+
+  function resetAllData() {
+    if (!confirm('全データを削除しますか？\nこの操作は取り消せません。')) return;
+    localStorage.clear();
+    records = [];
+    waterData = {};
+    updateTodaySummary();
+    showToast('全データを削除しました', false);
+  }
+
+  function importData() {
+    // Androidアプリならファイルピッカーを使用
+    if (typeof AndroidBridge !== 'undefined') {
+      AndroidBridge.openFilePicker();
+    } else {
+      // ブラウザの場合はファイル入力を使用
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.html,text/html';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const html = ev.target.result;
+          const marker = 'const importData = ';
+          const startIdx = html.indexOf(marker);
+          if (startIdx < 0) { showToast('有効なファイルではありません'); return; }
+          const jsonStart = startIdx + marker.length;
+          let depth = 0, jsonEnd = jsonStart;
+          for (let i = jsonStart; i < html.length; i++) {
+            if (html[i] === '[' || html[i] === '{') depth++;
+            else if (html[i] === ']' || html[i] === '}') {
+              depth--;
+              if (depth === 0) { jsonEnd = i; break; }
+            }
+          }
+          try {
+            const importData = JSON.parse(html.substring(jsonStart, jsonEnd + 1));
+            const existing = JSON.parse(localStorage.getItem('training_records') || '[]');
+            const merged = [...existing];
+            let added = 0, updated = 0;
+            for (const rec of importData) {
+              const idx = merged.findIndex(r => r.date === rec.date);
+              if (idx >= 0) { merged[idx] = rec; updated++; }
+              else { merged.push(rec); added++; }
+            }
+            merged.sort((a,b) => b.date.localeCompare(a.date));
+            localStorage.setItem('training_records', JSON.stringify(merged));
+            records = merged;
+            updateTodaySummary();
+            showToast(`✅ 追加: ${added}件 / 更新: ${updated}件`, false);
+          } catch(e) {
+            showToast('エラー: ' + e.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
   }
 
   init();
