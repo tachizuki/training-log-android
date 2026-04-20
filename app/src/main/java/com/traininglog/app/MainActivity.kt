@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
 
-    private val REMOTE_URL = "https://tachizuki.github.io/shred-log/index.html"
+    private val REMOTE_URL = "https://gregarious-bombolone-bdabaa.netlify.app/index.html"
     private val LOCAL_URL = "file:///android_asset/index.html"
 
     @SuppressLint("SetJavaScriptEnabled")
