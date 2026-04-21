@@ -1621,13 +1621,21 @@ if (absDiff < 0.15) {
   let gymParts = ['胸']; // 複数選択対応
 
   function gymSelectPart(part, btn) {
+    // 切替前に現在の入力を自動保存
+    if (gymExercises.length > 0) {
+      const key = getGymKey();
+      if (!gymData[key]) gymData[key] = {};
+      gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
+      localStorage.setItem('gym_data', JSON.stringify(gymData));
+    }
+
     const idx = gymParts.indexOf(part);
     if (idx >= 0) {
-      if (gymParts.length > 1) gymParts.splice(idx, 1); // 1つは必ず選択
+      if (gymParts.length > 1) gymParts.splice(idx, 1);
     } else {
       gymParts.push(part);
     }
-    // ボタンの見た目を更新
+
     document.querySelectorAll('.gym-part-btn').forEach(b => {
       b.classList.toggle('active', gymParts.includes(b.textContent.trim()));
     });
