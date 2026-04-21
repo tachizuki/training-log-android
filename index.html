@@ -1253,7 +1253,12 @@ if (absDiff < 0.15) {
     setTimeout(()=>t.classList.remove('show'),2000);
   }
 
-  init();
+  // DOM読み込み完了後に確実に初期化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 </script>
 </body>
 </html>
