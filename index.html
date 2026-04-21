@@ -67,6 +67,7 @@
   .btn-main:active::after { opacity: 1; }
   .btn-record { background: var(--accent); color: var(--bg); }
   .btn-water { background: rgba(0,212,255,0.12); color: var(--accent2); border: 1px solid rgba(0,212,255,0.4); }
+  .btn-gym { background: rgba(232,255,0,0.08); color: var(--accent); border: 1px solid rgba(232,255,0,0.3); }
   .btn-view { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
 
   .screen { display: none; min-height: 100vh; padding: 0 0 80px 0; }
@@ -223,6 +224,77 @@
   .record-edit-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: var(--text-muted); font-size: 11px; cursor: pointer; float: right; margin-top: -2px; }
   .record-edit-btn:active { background: var(--surface2); }
 
+  /* GYM SCREEN */
+  .gym-date-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .gym-date-nav { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; padding: 4px 10px; }
+  .gym-date-label { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--text); letter-spacing: 0.05em; }
+  .gym-action-bar { display: flex; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+  .gym-action-btn { flex: 1; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); font-size: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .gym-action-btn:active { background: var(--surface2); }
+  .gym-action-btn.accent { color: var(--accent); border-color: rgba(232,255,0,0.3); }
+  .gym-part-bar { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+  .gym-part-btn { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
+  .gym-part-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+  .gym-body { padding: 16px 20px; }
+  .gym-exercise-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .gym-exercise-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .gym-exercise-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .gym-exercise-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
+  .gym-set-header { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px; gap: 4px; margin-bottom: 4px; }
+  .gym-set-header-label { font-size: 9px; color: var(--text-muted); text-align: center; letter-spacing: 0.05em; }
+  .gym-set-row { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px; gap: 4px; align-items: center; margin-bottom: 5px; }
+  .gym-set-label { font-size: 11px; color: var(--text-muted); text-align: center; }
+  .gym-set-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 4px; color: var(--text); font-size: 13px; text-align: center; outline: none; width: 100%; }
+  .gym-set-input:focus { border-color: var(--accent); }
+  .gym-set-rm { font-size: 10px; color: var(--accent2); text-align: center; line-height: 1.2; }
+  .gym-set-assist { display: flex; align-items: center; justify-content: center; }
+  .gym-assist-check { width: 20px; height: 20px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+  .gym-assist-check.on { background: #ff8c42; border-color: #ff8c42; }
+  .gym-assist-check.on::after { content: '補'; color: white; font-size: 8px; font-weight: bold; }
+  .gym-set-del { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; }
+  .gym-set-memo { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 12px; outline: none; margin-top: 4px; }
+  .gym-set-memo:focus { border-color: var(--accent); }
+  .gym-add-set-btn { width: 100%; padding: 7px; background: transparent; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; cursor: pointer; margin-top: 6px; }
+  .gym-add-exercise-btn { width: 100%; padding: 14px; background: rgba(232,255,0,0.06); border: 1px dashed rgba(232,255,0,0.3); border-radius: 12px; color: var(--accent); font-size: 14px; cursor: pointer; margin-bottom: 16px; }
+  .gym-save-btn { width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 12px; font-family: 'Bebas Neue', sans-serif; font-size: 22px; cursor: pointer; margin-top: 8px; }
+  .gym-exercise-picker { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 60; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .gym-exercise-picker.open { opacity: 1; pointer-events: all; }
+  .gym-picker-sheet { background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .gym-exercise-picker.open .gym-picker-sheet { transform: translateY(0); }
+  .gym-picker-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 14px; }
+  .gym-picker-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; }
+  .gym-picker-input:focus { border-color: var(--accent); }
+  .gym-picker-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 180px; overflow-y: auto; }
+  .gym-picker-item { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .gym-picker-item:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .gym-picker-custom-btn { width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; cursor: pointer; margin-top: 12px; }
+  /* TIMER */
+  .timer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .timer-overlay.open { opacity: 1; pointer-events: all; }
+  .timer-display { font-family: 'Bebas Neue', sans-serif; font-size: 96px; color: var(--accent); line-height: 1; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .timer-display.done { color: var(--danger); }
+  .timer-label { font-size: 13px; color: var(--text-muted); letter-spacing: 0.2em; margin-bottom: 32px; }
+  .timer-presets { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center; }
+  .timer-preset-btn { padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .timer-preset-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+  .timer-custom-row { display: flex; gap: 8px; align-items: center; margin-bottom: 28px; }
+  .timer-custom-input { width: 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); font-size: 20px; font-family: 'Bebas Neue', sans-serif; text-align: center; outline: none; }
+  .timer-custom-input:focus { border-color: var(--accent); }
+  .timer-custom-label { font-size: 13px; color: var(--text-muted); }
+  .timer-btns { display: flex; gap: 12px; }
+  .timer-btn { padding: 14px 28px; border: none; border-radius: 12px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; cursor: pointer; transition: opacity 0.2s; }
+  .timer-btn.start { background: var(--accent); color: var(--bg); }
+  .timer-btn.stop { background: var(--danger); color: white; }
+  .timer-btn.close-btn { background: var(--surface); color: var(--text-muted); }
+  /* SHARE CANVAS */
+  .share-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 20px; }
+  .share-overlay.open { opacity: 1; pointer-events: all; }
+  .share-canvas-wrap { border-radius: 12px; overflow: hidden; margin-bottom: 16px; max-width: 100%; }
+  .share-btns { display: flex; gap: 10px; }
+  .share-btn { padding: 12px 24px; border: none; border-radius: 12px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; cursor: pointer; }
+  .share-btn.download { background: var(--accent); color: var(--bg); }
+  .share-btn.cancel { background: var(--surface); color: var(--text-muted); }
+
   .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent); color: var(--bg); padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 13px; letter-spacing: 0.05em; z-index: 100; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.blue { background: var(--accent2); }
@@ -297,6 +369,7 @@
     <div class="main-buttons">
       <button class="btn-main btn-record" onclick="showScreen('record-screen')">記録する</button>
       <button class="btn-main btn-water" onclick="showScreen('water-screen'); renderWater()">💧 水分を記録する</button>
+      <button class="btn-main btn-gym" onclick="showScreen('gym-screen'); renderGym()">💪 筋トレメモ</button>
       <button class="btn-main btn-view" onclick="showScreen('view-screen'); renderView()">表示する</button>
 
     </div>
@@ -413,6 +486,77 @@
   </div>
 </div>
 
+<!-- GYM SCREEN -->
+<div id="gym-screen" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen(null)">←</button>
+    <div class="screen-title">💪 筋トレメモ</div>
+  </div>
+  <div class="gym-date-bar">
+    <button class="gym-date-nav" onclick="gymChangeDate(-1)">‹</button>
+    <span class="gym-date-label" id="gym-date-label"></span>
+    <button class="gym-date-nav" onclick="gymChangeDate(1)">›</button>
+  </div>
+  <div class="gym-action-bar">
+    <button class="gym-action-btn accent" onclick="gymCopyPrev()">📋 前回をコピー</button>
+    <button class="gym-action-btn" onclick="openTimer()">⏱ タイマー</button>
+    <button class="gym-action-btn" onclick="gymShare()">📷 シェア</button>
+  </div>
+  <div class="gym-part-bar" id="gym-part-bar">
+    <button class="gym-part-btn active" onclick="gymSelectPart('胸',this)">胸</button>
+    <button class="gym-part-btn" onclick="gymSelectPart('背中',this)">背中</button>
+    <button class="gym-part-btn" onclick="gymSelectPart('肩',this)">肩</button>
+    <button class="gym-part-btn" onclick="gymSelectPart('腕',this)">腕</button>
+    <button class="gym-part-btn" onclick="gymSelectPart('足',this)">足</button>
+    <button class="gym-part-btn" onclick="gymSelectPart('腹筋',this)">腹筋</button>
+  </div>
+  <div class="gym-body">
+    <div id="gym-exercise-list"></div>
+    <button class="gym-add-exercise-btn" onclick="openGymPicker()">＋ 種目を追加</button>
+    <button class="gym-save-btn" onclick="saveGym()">保存する</button>
+  </div>
+</div>
+
+<!-- GYM PICKER -->
+<div class="gym-exercise-picker" id="gym-picker" onclick="handleGymPickerOverlay(event)">
+  <div class="gym-picker-sheet">
+    <div class="gym-picker-title">種目を選択</div>
+    <input type="text" class="gym-picker-input" id="gym-picker-search" placeholder="種目名を入力または検索..." oninput="filterGymPicker()">
+    <div class="gym-picker-list" id="gym-picker-list"></div>
+    <button class="gym-picker-custom-btn" onclick="addCustomGymExercise()">このまま追加</button>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div class="timer-overlay" id="timer-overlay">
+  <div class="timer-display" id="timer-display">00:00</div>
+  <div class="timer-label" id="timer-label">REST TIMER</div>
+  <div class="timer-presets">
+    <button class="timer-preset-btn" onclick="setTimerSec(30)">30秒</button>
+    <button class="timer-preset-btn" onclick="setTimerSec(60)">1分</button>
+    <button class="timer-preset-btn active" onclick="setTimerSec(90)">90秒</button>
+    <button class="timer-preset-btn" onclick="setTimerSec(120)">2分</button>
+    <button class="timer-preset-btn" onclick="setTimerSec(180)">3分</button>
+  </div>
+  <div class="timer-custom-row">
+    <input type="number" class="timer-custom-input" id="timer-custom-input" placeholder="90" value="90">
+    <span class="timer-custom-label">秒で設定</span>
+    <button class="timer-preset-btn" onclick="setTimerSec(parseInt(document.getElementById('timer-custom-input').value)||90)">セット</button>
+  </div>
+  <div class="timer-btns">
+    <button class="timer-btn start" id="timer-start-btn" onclick="toggleTimer()">スタート</button>
+    <button class="timer-btn close-btn" onclick="closeTimer()">閉じる</button>
+  </div>
+</div>
+
+<!-- SHARE OVERLAY -->
+<div class="share-overlay" id="share-overlay">
+  <div class="share-canvas-wrap"><canvas id="share-canvas"></canvas></div>
+  <div class="share-btns">
+    <button class="share-btn download" onclick="downloadShareImage()">📥 保存</button>
+    <button class="share-btn cancel" onclick="document.getElementById('share-overlay').classList.remove('open')">閉じる</button>
+  </div>
+</div>
 <!-- VIEW SCREEN -->
 <div id="view-screen" class="screen">
   <div class="screen-header">
@@ -1249,6 +1393,387 @@ if (absDiff < 0.15) {
     showToast('削除しました', false);
   }
 
+  // ==================
+  // GYM MEMO
+  // ==================
+  let gymData = JSON.parse(localStorage.getItem('gym_data') || '{}');
+  let gymDate = formatDate(new Date());
+  let gymPart = '胸';
+  let gymExercises = [];
+
+  const GYM_PRESETS = {
+    '胸': ['ベンチプレス','ダンベルフライ','ケーブルクロスオーバー','インクラインベンチプレス','ディップス','ペックデック','インクラインダンベルフライ'],
+    '背中': ['デッドリフト','ラットプルダウン','チンニング','ワンハンドロウ','シーテッドロウ','ベントオーバーロウ','バックエクステンション','Tバーロウ'],
+    '肩': ['ダンベルショルダープレス','サイドレイズ','フロントレイズ','リアレイズ','アーノルドプレス','フェイスプル','バーベルショルダープレス'],
+    '腕': ['バーベルカール','ダンベルカール','ハンマーカール','スカルクラッシャー','トライセプスプッシュダウン','クローズグリップベンチ','インクラインカール'],
+    '足': ['バーベルスクワット','ハックスクワット','レッグプレス','ブルガリアンスクワット','レッグエクステンション','レッグカール','アウターサイ','ルーマニアンデッドリフト'],
+    '腹筋': ['クランチ','レッグレイズ','プランク','ロシアンツイスト','アブローラー','ハンギングレッグレイズ'],
+  };
+
+  // 1RM計算 (Epley式)
+  function calcRM(weight, reps) {
+    if (!weight || !reps || reps <= 0) return null;
+    if (reps === 1) return weight;
+    return Math.round(weight * (1 + reps / 30) * 10) / 10;
+  }
+
+  function renderGym() {
+    gymDate = gymDate || formatDate(new Date());
+    updateGymDateLabel();
+    const firstBtn = document.querySelector('.gym-part-btn');
+    if (firstBtn) gymSelectPart(gymPart, document.querySelector('.gym-part-btn.active') || firstBtn);
+  }
+
+  function updateGymDateLabel() {
+    const [y,m,d] = gymDate.split('-').map(Number);
+    const dt = new Date(y,m-1,d);
+    const days = ['日','月','火','水','木','金','土'];
+    document.getElementById('gym-date-label').textContent = `${y}/${m}/${d} (${days[dt.getDay()]})`;
+  }
+
+  function gymChangeDate(delta) {
+    const [y,m,d] = gymDate.split('-').map(Number);
+    const dt = new Date(y,m-1,d+delta);
+    gymDate = formatDate(dt);
+    updateGymDateLabel();
+    loadGymData();
+  }
+
+  function gymSelectPart(part, btn) {
+    gymPart = part;
+    document.querySelectorAll('.gym-part-btn').forEach(b=>b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    loadGymData();
+  }
+
+  function loadGymData() {
+    const key = gymDate + '_' + gymPart;
+    const saved = gymData[key] || {exercises:[]};
+    gymExercises = JSON.parse(JSON.stringify(saved.exercises || []));
+    renderGymExercises();
+  }
+
+  function renderGymExercises() {
+    const list = document.getElementById('gym-exercise-list');
+    if (gymExercises.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:20px 0;"><div class="empty-state-icon">🏋️</div><div class="empty-state-text">種目を追加してください</div></div>';
+      return;
+    }
+    list.innerHTML = gymExercises.map((ex, ei) => {
+      const headerRow = `
+        <div class="gym-set-header">
+          <span class="gym-set-header-label">SET</span>
+          <span class="gym-set-header-label">重量kg</span>
+          <span class="gym-set-header-label">回数</span>
+          <span class="gym-set-header-label">1RM</span>
+          <span class="gym-set-header-label">補</span>
+          <span class="gym-set-header-label"></span>
+        </div>`;
+      const setsHTML = ex.sets.map((s, si) => {
+        const rm = calcRM(s.weight, s.reps);
+        const rmText = rm ? rm+'kg' : '—';
+        const assistClass = s.assist ? 'on' : '';
+        return `
+          <div class="gym-set-row">
+            <span class="gym-set-label">${si+1}</span>
+            <input type="number" class="gym-set-input" placeholder="kg" value="${s.weight||''}" step="0.5"
+              onchange="gymUpdateSet(${ei},${si},'weight',this.value)">
+            <input type="number" class="gym-set-input" placeholder="rep" value="${s.reps||''}"
+              onchange="gymUpdateSet(${ei},${si},'reps',this.value)">
+            <span class="gym-set-rm">${rmText}</span>
+            <div class="gym-set-assist">
+              <div class="gym-assist-check ${assistClass}" onclick="gymToggleAssist(${ei},${si})"></div>
+            </div>
+            <button class="gym-set-del" onclick="gymDelSet(${ei},${si})">✕</button>
+          </div>
+          <input type="text" class="gym-set-memo" placeholder="メモ（空欄可）" value="${s.memo||''}"
+            onchange="gymUpdateSet(${ei},${si},'memo',this.value)">`;
+      }).join('');
+      return `
+        <div class="gym-exercise-card">
+          <div class="gym-exercise-header">
+            <span class="gym-exercise-name">${ex.name}</span>
+            <button class="gym-exercise-del" onclick="gymDelExercise(${ei})">✕</button>
+          </div>
+          ${headerRow}
+          ${setsHTML}
+          <button class="gym-add-set-btn" onclick="gymAddSet(${ei})">＋ セットを追加</button>
+        </div>`;
+    }).join('');
+  }
+
+  function gymUpdateSet(ei, si, field, val) {
+    if (field === 'weight' || field === 'reps') {
+      gymExercises[ei].sets[si][field] = parseFloat(val) || null;
+    } else {
+      gymExercises[ei].sets[si][field] = val;
+    }
+    renderGymExercises();
+  }
+
+  function gymToggleAssist(ei, si) {
+    gymExercises[ei].sets[si].assist = !gymExercises[ei].sets[si].assist;
+    renderGymExercises();
+  }
+
+  function gymAddSet(ei) {
+    gymExercises[ei].sets.push({weight:null,reps:null,assist:false,memo:''});
+    renderGymExercises();
+  }
+
+  function gymDelSet(ei, si) {
+    gymExercises[ei].sets.splice(si,1);
+    renderGymExercises();
+  }
+
+  function gymDelExercise(ei) {
+    gymExercises.splice(ei,1);
+    renderGymExercises();
+  }
+
+  function gymAddExercise(name) {
+    gymExercises.push({name, sets:[{weight:null,reps:null,assist:false,memo:''}]});
+    renderGymExercises();
+    document.getElementById('gym-picker').classList.remove('open');
+  }
+
+  function saveGym() {
+    const key = gymDate + '_' + gymPart;
+    if (!gymData[key]) gymData[key] = {};
+    gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
+    localStorage.setItem('gym_data', JSON.stringify(gymData));
+    showToast('保存しました ✓', false);
+  }
+
+  // 前回コピー
+  function gymCopyPrev() {
+    // 直近の同部位データを探す
+    const keys = Object.keys(gymData)
+      .filter(k => k.endsWith('_'+gymPart) && k < gymDate+'_'+gymPart)
+      .sort().reverse();
+    if (keys.length === 0) { showToast('前回のデータがありません'); return; }
+    const prev = gymData[keys[0]];
+    gymExercises = JSON.parse(JSON.stringify(prev.exercises || []));
+    // 重量・回数は残してメモはクリア
+    gymExercises.forEach(ex => ex.sets.forEach(s => { s.memo = ''; }));
+    renderGymExercises();
+    const prevDate = keys[0].replace('_'+gymPart,'');
+    showToast(`${prevDate}の記録をコピーしました`, false);
+  }
+
+  // PICKER
+  function openGymPicker() {
+    document.getElementById('gym-picker').classList.add('open');
+    document.getElementById('gym-picker-search').value = '';
+    filterGymPicker();
+    setTimeout(()=>document.getElementById('gym-picker-search').focus(),300);
+  }
+
+  function handleGymPickerOverlay(e) {
+    if(e.target===document.getElementById('gym-picker'))
+      document.getElementById('gym-picker').classList.remove('open');
+  }
+
+  function filterGymPicker() {
+    const q = document.getElementById('gym-picker-search').value.toLowerCase();
+    const presets = GYM_PRESETS[gymPart] || [];
+    const filtered = q ? presets.filter(p=>p.toLowerCase().includes(q)) : presets;
+    document.getElementById('gym-picker-list').innerHTML = filtered.map(p =>
+      `<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`
+    ).join('');
+  }
+
+  function addCustomGymExercise() {
+    const name = document.getElementById('gym-picker-search').value.trim();
+    if (!name) { showToast('種目名を入力してください'); return; }
+    gymAddExercise(name);
+  }
+
+  // ==================
+  // TIMER
+  // ==================
+  let timerSec = 90;
+  let timerRemain = 90;
+  let timerInterval = null;
+  let timerRunning = false;
+
+  function openTimer() {
+    document.getElementById('timer-overlay').classList.add('open');
+    timerRemain = timerSec;
+    updateTimerDisplay();
+  }
+
+  function closeTimer() {
+    document.getElementById('timer-overlay').classList.remove('open');
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-start-btn').textContent = 'スタート';
+    document.getElementById('timer-display').classList.remove('done');
+  }
+
+  function setTimerSec(sec) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSec = sec;
+    timerRemain = sec;
+    document.getElementById('timer-custom-input').value = sec;
+    document.getElementById('timer-start-btn').textContent = 'スタート';
+    document.getElementById('timer-display').classList.remove('done');
+    document.querySelectorAll('.timer-preset-btn').forEach(b=>{
+      b.classList.toggle('active', parseInt(b.textContent)===sec || b.textContent===sec+'秒' ||
+        (sec===30&&b.textContent==='30秒')||(sec===60&&b.textContent==='1分')||
+        (sec===90&&b.textContent==='90秒')||(sec===120&&b.textContent==='2分')||(sec===180&&b.textContent==='3分'));
+    });
+    updateTimerDisplay();
+  }
+
+  function toggleTimer() {
+    if (timerRunning) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById('timer-start-btn').textContent = 'スタート';
+    } else {
+      if (timerRemain <= 0) { timerRemain = timerSec; document.getElementById('timer-display').classList.remove('done'); }
+      timerRunning = true;
+      document.getElementById('timer-start-btn').textContent = '停止';
+      timerInterval = setInterval(()=>{
+        timerRemain--;
+        updateTimerDisplay();
+        if (timerRemain <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          document.getElementById('timer-start-btn').textContent = 'スタート';
+          document.getElementById('timer-display').classList.add('done');
+          document.getElementById('timer-label').textContent = '完了！';
+          // バイブレーション
+          if (navigator.vibrate) navigator.vibrate([300,100,300]);
+        }
+      }, 1000);
+    }
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(timerRemain/60);
+    const s = timerRemain % 60;
+    document.getElementById('timer-display').textContent =
+      String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    document.getElementById('timer-label').textContent = 'REST TIMER';
+  }
+
+  // ==================
+  // SHARE (Canvas)
+  // ==================
+  function gymShare() {
+    if (gymExercises.length === 0) { showToast('種目がありません'); return; }
+
+    const canvas = document.getElementById('share-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = 720;
+    const lineH = 28;
+    const padding = 40;
+
+    // 高さ計算
+    let totalLines = 3; // タイトル・日付・部位
+    gymExercises.forEach(ex => {
+      totalLines += 2; // 種目名 + ヘッダー
+      totalLines += ex.sets.length;
+      ex.sets.forEach(s => { if(s.memo) totalLines += 0.8; });
+    });
+    const H = padding*2 + totalLines * lineH + 20;
+
+    canvas.width = W;
+    canvas.height = H;
+
+    // 背景
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0,0,W,H);
+
+    // アクセントライン
+    ctx.fillStyle = '#e8ff00';
+    ctx.fillRect(0,0,4,H);
+
+    let y = padding;
+
+    // タイトル
+    ctx.fillStyle = '#e8ff00';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.fillText('TRAINING LOG', padding+10, y+24);
+    y += lineH*1.5;
+
+    // 日付・部位
+    ctx.fillStyle = '#666';
+    ctx.font = '18px sans-serif';
+    ctx.fillText(`${gymDate}  ${gymPart}`, padding+10, y+18);
+    y += lineH*1.5;
+
+    // 区切り線
+    ctx.fillStyle = '#2a2a3a';
+    ctx.fillRect(padding, y, W-padding*2, 1);
+    y += 16;
+
+    gymExercises.forEach(ex => {
+      // 種目名
+      ctx.fillStyle = '#f0f0f0';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(ex.name, padding+10, y+18);
+      y += lineH;
+
+      // ヘッダー
+      ctx.fillStyle = '#444';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('SET', padding+10, y+14);
+      ctx.fillText('重量(kg)', padding+80, y+14);
+      ctx.fillText('回数', padding+200, y+14);
+      ctx.fillText('1RM', padding+300, y+14);
+      ctx.fillText('補助', padding+400, y+14);
+      y += lineH*0.8;
+
+      ex.sets.forEach((s, si) => {
+        const rm = calcRM(s.weight, s.reps);
+        ctx.fillStyle = s.assist ? '#ff8c42' : '#f0f0f0';
+        ctx.font = '16px sans-serif';
+        ctx.fillText(`${si+1}`, padding+10, y+16);
+        ctx.fillStyle = '#00d4ff';
+        ctx.fillText(s.weight ? s.weight+'kg' : '—', padding+80, y+16);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillText(s.reps ? s.reps+'rep' : '—', padding+200, y+16);
+        ctx.fillStyle = '#e8ff00';
+        ctx.fillText(rm ? rm+'kg' : '—', padding+300, y+16);
+        ctx.fillStyle = s.assist ? '#ff8c42' : '#444';
+        ctx.fillText(s.assist ? '✓補助' : '—', padding+400, y+16);
+        y += lineH;
+
+        if (s.memo) {
+          ctx.fillStyle = '#555';
+          ctx.font = 'italic 13px sans-serif';
+          ctx.fillText('  └ '+s.memo, padding+20, y+12);
+          y += lineH*0.8;
+        }
+      });
+
+      // 区切り
+      ctx.fillStyle = '#1a1a26';
+      ctx.fillRect(padding, y+4, W-padding*2, 1);
+      y += lineH*0.8;
+    });
+
+    // フッター
+    ctx.fillStyle = '#333';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('TrainingLog', W-padding-80, H-padding+10);
+
+    document.getElementById('share-overlay').classList.add('open');
+  }
+
+  function downloadShareImage() {
+    const canvas = document.getElementById('share-canvas');
+    const link = document.createElement('a');
+    link.download = `training_${gymDate}_${gymPart}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  function showToast(msg, blue=false) {
   function showToast(msg, blue=false) {
     const t=document.getElementById('toast');
     t.textContent=msg;
