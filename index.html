@@ -443,7 +443,7 @@
   <div class="screen-body">
     <div class="form-section">
       <div class="form-section-title">📅 日付</div>
-      <div class="form-group"><input type="date" class="form-input" id="rec-date"></div>
+      <div class="form-group"><input type="date" class="form-input" id="rec-date" onchange="loadRecordByDate(this.value)"></div>
     </div>
     <div class="form-section">
       <div class="form-section-title">⚖️ 体重・睡眠</div>
@@ -889,6 +889,34 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     if (!id) { document.getElementById('top-screen').style.display = 'flex'; updateTodaySummary(); }
     else document.getElementById(id).classList.add('active');
+  }
+
+  function loadRecordByDate(date) {
+    if (!date) return;
+    const r = records.find(x => x.date === date);
+    if (!r) return;
+    // 既存データを各フィールドに流し込む
+    document.getElementById('rec-weight').value = r.weight||'';
+    document.getElementById('rec-sleep').value = r.sleep||'';
+    document.getElementById('rec-p').value = r.p||'';
+    document.getElementById('rec-f').value = r.f||'';
+    document.getElementById('rec-c').value = r.c||'';
+    document.getElementById('rec-kcal').value = r.kcal||'';
+    document.getElementById('rec-salt').value = r.salt||'';
+    document.getElementById('rec-steps').value = r.steps||'';
+    document.getElementById('rec-salon').value = r.salon||'';
+    document.getElementById('rec-memo').value = r.memo||'';
+    // 筋トレ部位
+    trainingOn = r.trained||false;
+    selectedMuscles = [...(r.muscles||[])];
+    document.getElementById('training-toggle').classList.toggle('on', trainingOn);
+    document.getElementById('muscle-selector').style.display = trainingOn ? 'block' : 'none';
+    document.querySelectorAll('.muscle-btn').forEach(b => {
+      b.classList.toggle('selected', selectedMuscles.includes(b.dataset.muscle));
+    });
+    // 運動記録
+    recActivities = JSON.parse(JSON.stringify(r.activities||[]));
+    renderActivityList();
   }
 
   function calcKcal() {
@@ -1831,6 +1859,7 @@ if (absDiff < 0.15) {
     gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
     localStorage.setItem('gym_data', JSON.stringify(gymData));
     showToast('保存しました ✓', false);
+    setTimeout(() => showScreen(null), 600);
   }
 
   // 前回コピー
@@ -1895,8 +1924,9 @@ if (absDiff < 0.15) {
 
   function filterGymPicker() {
     const q = document.getElementById('gym-picker-search').value.toLowerCase();
-    const presets = GYM_PRESETS[gymPart] || [];
-    const filtered = q ? presets.filter(p=>p.toLowerCase().includes(q)) : presets;
+    // 選択中の全部位のプリセットをマージ（重複排除）
+    const allPresets = [...new Set(gymParts.flatMap(p => GYM_PRESETS[p] || []))];
+    const filtered = q ? allPresets.filter(p=>p.toLowerCase().includes(q)) : allPresets;
     document.getElementById('gym-picker-list').innerHTML = filtered.map(p =>
       `<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`
     ).join('');
