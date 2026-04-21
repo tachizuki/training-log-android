@@ -569,6 +569,7 @@
     <button class="gym-action-btn" onclick="openTimer()">⏱ タイマー</button>
     <button class="gym-action-btn" onclick="gymShare()">📷 シェア</button>
   </div>
+  <div style="padding:6px 20px 0;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;">複数選択可</div>
   <div class="gym-part-bar" id="gym-part-bar">
     <button class="gym-part-btn active" onclick="gymSelectPart('胸',this)">胸</button>
     <button class="gym-part-btn" onclick="gymSelectPart('背中',this)">背中</button>
@@ -1592,9 +1593,13 @@ if (absDiff < 0.15) {
 
   function renderGym() {
     gymDate = gymDate || formatDate(new Date());
+    gymParts = gymParts.length ? gymParts : ['胸'];
     updateGymDateLabel();
-    const firstBtn = document.querySelector('.gym-part-btn');
-    if (firstBtn) gymSelectPart(gymPart, document.querySelector('.gym-part-btn.active') || firstBtn);
+    // ボタンの状態を復元
+    document.querySelectorAll('.gym-part-btn').forEach(b => {
+      b.classList.toggle('active', gymParts.includes(b.textContent.trim()));
+    });
+    loadGymData();
   }
 
   function updateGymDateLabel() {
@@ -1613,15 +1618,28 @@ if (absDiff < 0.15) {
     loadGymData();
   }
 
+  let gymParts = ['胸']; // 複数選択対応
+
   function gymSelectPart(part, btn) {
-    gymPart = part;
-    document.querySelectorAll('.gym-part-btn').forEach(b=>b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+    const idx = gymParts.indexOf(part);
+    if (idx >= 0) {
+      if (gymParts.length > 1) gymParts.splice(idx, 1); // 1つは必ず選択
+    } else {
+      gymParts.push(part);
+    }
+    // ボタンの見た目を更新
+    document.querySelectorAll('.gym-part-btn').forEach(b => {
+      b.classList.toggle('active', gymParts.includes(b.textContent.trim()));
+    });
     loadGymData();
   }
 
+  function getGymKey() {
+    return gymDate + '_' + [...gymParts].sort().join('+');
+  }
+
   function loadGymData() {
-    const key = gymDate + '_' + gymPart;
+    const key = getGymKey();
     const saved = gymData[key] || {exercises:[]};
     gymExercises = JSON.parse(JSON.stringify(saved.exercises || []));
     renderGymExercises();
@@ -1800,7 +1818,7 @@ if (absDiff < 0.15) {
   }
 
   function saveGym() {
-    const key = gymDate + '_' + gymPart;
+    const key = getGymKey();
     if (!gymData[key]) gymData[key] = {};
     gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
     localStorage.setItem('gym_data', JSON.stringify(gymData));
@@ -1809,17 +1827,17 @@ if (absDiff < 0.15) {
 
   // 前回コピー
   function gymCopyPrev() {
-    // 直近の同部位データを探す
+    const partKey = [...gymParts].sort().join('+');
+    const currentKey = getGymKey();
     const keys = Object.keys(gymData)
-      .filter(k => k.endsWith('_'+gymPart) && k < gymDate+'_'+gymPart)
+      .filter(k => k.includes('_'+partKey) && k < currentKey)
       .sort().reverse();
     if (keys.length === 0) { showToast('前回のデータがありません'); return; }
     const prev = gymData[keys[0]];
     gymExercises = JSON.parse(JSON.stringify(prev.exercises || []));
-    // 重量・回数は残してメモはクリア
     gymExercises.forEach(ex => ex.sets.forEach(s => { s.memo = ''; }));
     renderGymExercises();
-    const prevDate = keys[0].replace('_'+gymPart,'');
+    const prevDate = keys[0].split('_')[0];
     showToast(`${prevDate}の記録をコピーしました`, false);
   }
 
@@ -2012,7 +2030,7 @@ if (absDiff < 0.15) {
     // 日付・部位
     ctx.fillStyle = '#666';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`${gymDate}  ${gymPart}`, padding+10, y+18);
+    ctx.fillText(`${gymDate}  ${gymParts.join('・')}`, padding+10, y+18);
     y += lineH*1.5;
 
     // 区切り線
