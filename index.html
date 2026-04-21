@@ -287,9 +287,9 @@
   .gym-exercise-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .gym-exercise-name { font-size: 14px; font-weight: 700; color: var(--text); }
   .gym-exercise-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
-  .gym-set-header { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px; gap: 4px; margin-bottom: 4px; }
+  .gym-set-header { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px 28px; gap: 4px; margin-bottom: 4px; }
   .gym-set-header-label { font-size: 9px; color: var(--text-muted); text-align: center; letter-spacing: 0.05em; }
-  .gym-set-row { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px; gap: 4px; align-items: center; margin-bottom: 5px; }
+  .gym-set-row { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px 28px; gap: 4px; align-items: center; margin-bottom: 5px; }
   .gym-set-label { font-size: 11px; color: var(--text-muted); text-align: center; }
   .gym-set-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 4px; color: var(--text); font-size: 13px; text-align: center; outline: none; width: 100%; }
   .gym-set-input:focus { border-color: var(--accent); }
@@ -299,6 +299,7 @@
   .gym-assist-check.on { background: #ff8c42; border-color: #ff8c42; }
   .gym-assist-check.on::after { content: '補'; color: white; font-size: 8px; font-weight: bold; }
   .gym-set-del { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; text-align: center; }
+  .gym-set-copy-btn { background: none; border: none; color: var(--accent2); font-size: 14px; cursor: pointer; text-align: center; }
   .gym-set-memo { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 12px; outline: none; margin-top: 4px; }
   .gym-set-memo:focus { border-color: var(--accent); }
   .gym-add-set-btn { width: 100%; padding: 7px; background: transparent; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; cursor: pointer; margin-top: 6px; }
@@ -1619,7 +1620,7 @@ if (absDiff < 0.15) {
           <span class="gym-set-header-label">回数</span>
           <span class="gym-set-header-label">1RM</span>
           <span class="gym-set-header-label">補</span>
-          <span class="gym-set-header-label"></span>
+          <span class="gym-set-header-label">複製</span>
         </div>`;
       const setsHTML = ex.sets.map((s, si) => {
         const rm = calcRM(s.weight, s.reps);
@@ -1636,6 +1637,7 @@ if (absDiff < 0.15) {
             <div class="gym-set-assist">
               <div class="gym-assist-check ${assistClass}" onclick="gymToggleAssist(${ei},${si})"></div>
             </div>
+            <button class="gym-set-copy-btn" onclick="gymCopySet(${ei},${si})" title="このセットを次に複製">⧉</button>
             <button class="gym-set-del" onclick="gymDelSet(${ei},${si})">✕</button>
           </div>
           <input type="text" class="gym-set-memo" placeholder="メモ（空欄可）" value="${s.memo||''}"
@@ -1670,6 +1672,13 @@ if (absDiff < 0.15) {
 
   function gymAddSet(ei) {
     gymExercises[ei].sets.push({weight:null,reps:null,assist:false,memo:''});
+    renderGymExercises();
+  }
+
+  function gymCopySet(ei, si) {
+    const src = gymExercises[ei].sets[si];
+    const copy = {weight: src.weight, reps: src.reps, assist: src.assist, memo: ''};
+    gymExercises[ei].sets.splice(si+1, 0, copy);
     renderGymExercises();
   }
 
