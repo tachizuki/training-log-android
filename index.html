@@ -1651,10 +1651,18 @@ if (absDiff < 0.15) {
           <div class="gym-set-row">
             <span class="gym-set-label">${si+1}</span>
             <input type="number" class="gym-set-input" placeholder="kg" value="${s.weight||''}" step="0.5"
-              onchange="gymUpdateSet(${ei},${si},'weight',this.value)">
+              inputmode="decimal" enterkeyhint="next"
+              id="gs-${ei}-${si}-w"
+              onchange="gymUpdateSet(${ei},${si},'weight',this.value)"
+              onfocus="this.select()"
+              onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();const n=document.getElementById('gs-${ei}-${si}-r');if(n){n.focus();n.select();}}">
             <input type="number" class="gym-set-input" placeholder="rep" value="${s.reps||''}"
-              onchange="gymUpdateSet(${ei},${si},'reps',this.value)">
-            <span class="gym-set-rm">${rmText}</span>
+              inputmode="numeric" enterkeyhint="done"
+              id="gs-${ei}-${si}-r"
+              onchange="gymUpdateSet(${ei},${si},'reps',this.value)"
+              onfocus="this.select()"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();gymAddSet(${ei});}">
+            <span class="gym-set-rm" id="gs-${ei}-${si}-rm">${rmText}</span>
             <div class="gym-set-assist">
               <div class="gym-assist-check ${assistClass}" onclick="gymToggleAssist(${ei},${si})"></div>
             </div>
@@ -1683,7 +1691,13 @@ if (absDiff < 0.15) {
     } else {
       gymExercises[ei].sets[si][field] = val;
     }
-    renderGymExercises();
+    // 1RM表示だけ更新（再レンダリングしないのでフォーカスが外れない）
+    if (field === 'weight' || field === 'reps') {
+      const s = gymExercises[ei].sets[si];
+      const rm = calcRM(s.weight, s.reps);
+      const rmEl = document.getElementById(`gs-${ei}-${si}-rm`);
+      if (rmEl) rmEl.textContent = rm ? rm+'kg' : '—';
+    }
   }
 
   function gymToggleAssist(ei, si) {
