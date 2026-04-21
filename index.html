@@ -915,11 +915,14 @@
 
   // ===== 体重変動分析 =====
   function analyzeWeightChange(r) {
-    const rDate = new Date(r.date+'T00:00:00');
-    const prevDate = new Date(rDate); prevDate.setDate(rDate.getDate()-1);
-    const prev2Date = new Date(rDate); prev2Date.setDate(rDate.getDate()-2);
-    const prevKey = formatDate(prevDate);
-    const prev2Key = formatDate(prev2Date);
+    // タイムゾーン問題を避けるため文字列で日付計算
+    function addDays(dateStr, days) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m-1, d+days);
+      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    }
+    const prevKey = addDays(r.date, -1);
+    const prev2Key = addDays(r.date, -2);
     const prevRec = records.find(x=>x.date===prevKey);
     const prev2Rec = records.find(x=>x.date===prev2Key);
     const prevWater = waterData[prevKey];
@@ -1080,7 +1083,8 @@ if (absDiff < 0.15) {
   function buildAnalysisHTML(r, dateKey) {
     const items = analyzeWeightChange(r);
     if (items.length === 0) return '';
-    const d = new Date(r.date+'T00:00:00');
+    const [_y,_m,_d] = r.date.split('-').map(Number);
+    const d = new Date(_y, _m-1, _d);
     const dateLabel = `${d.getMonth()+1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})`;
     const itemsHTML = items.map(item =>
       `<div class="analysis-item"><span class="analysis-icon">${item.icon}</span><span class="analysis-text ${item.cls}">${item.text}</span></div>`
@@ -1113,7 +1117,7 @@ if (absDiff < 0.15) {
     const filtered=getFilteredRecords();
     if(filtered.length===0){list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">記録がありません</div></div>';return;}
     list.innerHTML=filtered.map((r)=>{
-      const d=new Date(r.date+'T00:00:00');
+      const [ry,rm,rd]=r.date.split('-').map(Number); const d=new Date(ry,rm-1,rd);
       const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} (${['日','月','火','水','木','金','土'][d.getDay()]})`;
       const tags=[];
       if(r.trained&&r.muscles.length>0) r.muscles.forEach(m=>tags.push(`<span class="tag tag-muscle">💪 ${m}</span>`));
