@@ -735,8 +735,15 @@
       <div class="edit-group"><label class="edit-label">カロリー (kcal)</label><input type="number" class="edit-input" id="edit-kcal" placeholder="自動計算" readonly style="opacity:0.6"></div>
       <div class="edit-group"><label class="edit-label">塩分 (g)</label><input type="number" class="edit-input" id="edit-salt" step="0.1" placeholder="5.0"></div>
       <div class="edit-group"><label class="edit-label">日サロ (分)</label><input type="number" class="edit-input" id="edit-salon" placeholder="0"></div>
-      <div class="edit-group"><label class="edit-label">歩数</label><input type="number" class="edit-input" id="edit-steps" placeholder="8000"></div>
-      <div class="edit-group"><label class="edit-label">有酸素消費 合計(kcal)</label><input type="number" class="edit-input" id="edit-cardio-kcal" placeholder="200"></div>
+      <div class="edit-group full">
+        <label class="edit-label">🚶 歩数</label>
+        <input type="number" class="edit-input" id="edit-steps" placeholder="8000">
+      </div>
+      <div class="edit-group full">
+        <label class="edit-label">🏃 運動記録</label>
+        <div id="edit-activity-list" style="margin-bottom:8px;"></div>
+        <button class="activity-add-btn" style="font-size:13px;padding:10px;" onclick="openEditActivityPicker()">＋ 運動を追加</button>
+      </div>
       <div class="edit-group full"><label class="edit-label">水分摂取量 (ml)</label><input type="number" class="edit-input" id="edit-water" placeholder="3000"></div>
       <div class="edit-group full">
         <label class="edit-label">筋トレ部位</label>
@@ -1461,7 +1468,8 @@ if (absDiff < 0.15) {
     document.getElementById('edit-salon').value = r.salon||'';
     document.getElementById('edit-memo').value = r.memo||'';
     document.getElementById('edit-steps').value = r.steps||'';
-    document.getElementById('edit-cardio-kcal').value = r.cardioKcal||'';
+    editActivities = JSON.parse(JSON.stringify(r.activities||[]));
+    renderEditActivityList(r.weight);
     // 水分データをwaterDataから読み込む
     const wd = waterData[dateKey] || {total:0, log:[]};
     document.getElementById('edit-water').value = wd.total > 0 ? wd.total : '';
@@ -1504,7 +1512,8 @@ if (absDiff < 0.15) {
       salt: parseFloat(document.getElementById('edit-salt').value)||null,
       salon: parseInt(document.getElementById('edit-salon').value)||null,
       steps: parseInt(document.getElementById('edit-steps').value)||null,
-      cardioKcal: parseInt(document.getElementById('edit-cardio-kcal').value)||null,
+      activities: JSON.parse(JSON.stringify(editActivities)),
+      cardioKcal: editActivities.reduce((s,a)=>s+(a.kcal||0),0) || null,
       muscles: [...editMuscles],
       trained: editMuscles.length>0,
       memo: document.getElementById('edit-memo').value.trim(),
@@ -2083,6 +2092,81 @@ if (absDiff < 0.15) {
   }
 
   // handleAndroidBackにアクティビティピッカーを追加（既存のprofile-modalの前）
+  // 編集モーダル用アクティビティ
+  let editActivities = [];
+
+  function renderEditActivityList(weight) {
+    const el = document.getElementById('edit-activity-list');
+    if (!el) return;
+    const w = weight || parseFloat(document.getElementById('edit-weight')?.value) || 63;
+    if (editActivities.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = editActivities.map((a, i) => {
+      const kcal = a.met ? calcActivityKcal(a.met, a.minutes||0, w) : Math.round((a.kcalPerMin||0)*(a.minutes||0));
+      a.kcal = kcal;
+      return `<div class="activity-item">
+        <span class="activity-item-icon">${a.icon||'🏃'}</span>
+        <div class="activity-item-body">
+          <div class="activity-item-name">${a.name}</div>
+          <div class="activity-item-kcal">${kcal}kcal</div>
+        </div>
+        <input type="number" class="activity-item-min" value="${a.minutes||''}" placeholder="分"
+          onchange="updateEditActivityMin(${i}, this.value)">
+        <button class="activity-item-del" onclick="delEditActivity(${i})">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  function updateEditActivityMin(i, val) {
+    editActivities[i].minutes = parseInt(val)||0;
+    const w = parseFloat(document.getElementById('edit-weight')?.value)||63;
+    const a = editActivities[i];
+    a.kcal = a.met ? calcActivityKcal(a.met, a.minutes, w) : Math.round((a.kcalPerMin||0)*a.minutes);
+    renderEditActivityList(w);
+  }
+
+  function delEditActivity(i) {
+    editActivities.splice(i,1);
+    renderEditActivityList();
+  }
+
+  function openEditActivityPicker() {
+    // 同じピッカーを使い回す（フラグで区別）
+    window._editActivityMode = true;
+    openActivityPicker();
+  }
+
+  // addActivityFromPreset・addCustomActivityを編集モードに対応
+  const _origAddFromPreset = window.addActivityFromPreset;
+
+  function addActivityFromPreset(name, met, icon) {
+    if (window._editActivityMode) {
+      editActivities.push({name, met, icon, minutes:30, kcal:0});
+      renderEditActivityList();
+      document.getElementById('activity-picker').classList.remove('open');
+      window._editActivityMode = false;
+    } else {
+      recActivities.push({name, met, icon, minutes:30, kcal:0});
+      renderActivityList();
+      document.getElementById('activity-picker').classList.remove('open');
+    }
+  }
+
+  function addCustomActivity() {
+    const name = document.getElementById('activity-custom-name').value.trim();
+    const kcalPerMin = parseFloat(document.getElementById('activity-custom-kcal').value)||0;
+    if (!name) { showToast('種目名を入力してください'); return; }
+    if (window._editActivityMode) {
+      editActivities.push({name, kcalPerMin, icon:'🏃', minutes:30, kcal:0});
+      renderEditActivityList();
+      document.getElementById('activity-picker').classList.remove('open');
+      window._editActivityMode = false;
+    } else {
+      recActivities.push({name, kcalPerMin, icon:'🏃', minutes:30, kcal:0});
+      renderActivityList();
+      document.getElementById('activity-picker').classList.remove('open');
+    }
+  }
+
   // ==================
   // PROFILE & BMR
   // ==================
