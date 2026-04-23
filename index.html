@@ -543,11 +543,6 @@
     </button>
   </div>
 
-  <div id="saved-customs-wrap" style="display:none;">
-    <div class="water-section-title" style="margin-top:14px;">マイボタン</div>
-    <div class="water-custom-saved" id="saved-customs"></div>
-  </div>
-
   <div class="water-section-title" style="margin-top:18px;">今日のログ</div>
   <div class="water-log" id="water-log-list"></div>
   <div style="padding:0 20px;">
@@ -724,6 +719,19 @@
       <button class="modal-btn cancel" onclick="closeCustomModal()">キャンセル</button>
       <button class="modal-btn confirm" onclick="confirmCustom()">追加する</button>
     </div>
+  </div>
+</div>
+
+<!-- WATER BTN EDITOR -->
+<div class="activity-picker-overlay" id="water-btn-editor" onclick="if(event.target===this)closeWaterBtnEditor()">
+  <div class="activity-picker-sheet">
+    <div class="activity-picker-title" style="color:var(--accent2);">💧 クイックボタン編集</div>
+    <div id="water-btn-editor-list" style="margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="number" class="activity-picker-search" id="water-btn-new-val" placeholder="追加するml数" style="margin-bottom:0;">
+      <button class="activity-picker-add-btn" onclick="addWaterQuickBtn()">追加</button>
+    </div>
+    <button onclick="resetWaterBtns()" style="width:100%;margin-top:10px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:13px;cursor:pointer;">デフォルトに戻す</button>
   </div>
 </div>
 
@@ -997,7 +1005,7 @@
     const w = waterData[todayStr] || {total:0, log:[]};
     updateRing(w.total);
     renderWaterLog(w.log);
-    renderCustomButtons();
+    renderWaterQuickBtns();
     document.getElementById('water-goal-display').textContent = waterGoal + ' ml';
   }
 
@@ -1052,23 +1060,22 @@
     renderWater(); updateTodaySummary();
   }
 
-  function renderCustomButtons() {
-    const wrap = document.getElementById('saved-customs-wrap');
-    const el = document.getElementById('saved-customs');
-    if (customButtons.length===0){wrap.style.display='none';return;}
-    wrap.style.display='block';
-    el.innerHTML=customButtons.map((ml,i)=>`
-      <div class="saved-custom-btn" onclick="addWater(${ml})">
-        ${ml}ml
-        <button class="saved-custom-del" onclick="deleteCustomBtn(event,${i})">✕</button>
-      </div>`).join('');
+  function renderWaterQuickBtns() {
+    const grid = document.getElementById('water-quick-grid');
+    if (!grid) return;
+    grid.innerHTML = waterQuickBtns.map(ml => `
+      <button class="water-quick-btn" onclick="addWater(${ml})">
+        <span class="btn-ml">${ml}</span><span class="btn-unit">ml</span>
+      </button>`).join('') + `
+      <button class="water-quick-btn custom-btn" onclick="openCustomModal()">
+        <span class="custom-icon">＋</span><span style="font-size:12px;">カスタム</span>
+      </button>`;
   }
-
   function deleteCustomBtn(e,idx) {
     e.stopPropagation();
     customButtons.splice(idx,1);
     localStorage.setItem('water_custom_btns', JSON.stringify(customButtons));
-    renderCustomButtons();
+    renderWaterQuickBtns();
   }
 
   function openCustomModal() {
@@ -1090,13 +1097,57 @@
   function confirmCustom() {
     const ml=parseInt(document.getElementById('custom-ml-input').value);
     if(!ml||ml<=0){showToast('ml数を入力してください');return;}
-    if(saveCustom&&!customButtons.includes(ml)){
-      customButtons.push(ml); customButtons.sort((a,b)=>a-b);
-      localStorage.setItem('water_custom_btns',JSON.stringify(customButtons));
-      renderCustomButtons();
+    if(saveCustom&&!waterQuickBtns.includes(ml)){
+      waterQuickBtns.push(ml); waterQuickBtns.sort((a,b)=>a-b);
+      localStorage.setItem('water_quick_btns',JSON.stringify(waterQuickBtns));
+      renderWaterQuickBtns();
     }
     addWater(ml);
     closeCustomModal();
+  }
+
+  function openWaterBtnEditor() {
+    document.getElementById('water-btn-editor').classList.add('open');
+    renderWaterBtnEditorList();
+  }
+
+  function closeWaterBtnEditor() {
+    document.getElementById('water-btn-editor').classList.remove('open');
+    renderWaterQuickBtns();
+  }
+
+  function renderWaterBtnEditorList() {
+    const el = document.getElementById('water-btn-editor-list');
+    el.innerHTML = waterQuickBtns.map((ml, i) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border-radius:10px;margin-bottom:6px;">
+        <span style="font-size:15px;color:var(--text);">${ml}ml</span>
+        <button onclick="delWaterQuickBtn(${i})" style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;">✕</button>
+      </div>`).join('');
+  }
+
+  function addWaterQuickBtn() {
+    const ml = parseInt(document.getElementById('water-btn-new-val').value);
+    if (!ml || ml <= 0) { showToast('ml数を入力してください'); return; }
+    if (!waterQuickBtns.includes(ml)) {
+      waterQuickBtns.push(ml);
+      waterQuickBtns.sort((a,b)=>a-b);
+      localStorage.setItem('water_quick_btns', JSON.stringify(waterQuickBtns));
+    }
+    document.getElementById('water-btn-new-val').value = '';
+    renderWaterBtnEditorList();
+  }
+
+  function delWaterQuickBtn(i) {
+    waterQuickBtns.splice(i, 1);
+    localStorage.setItem('water_quick_btns', JSON.stringify(waterQuickBtns));
+    renderWaterBtnEditorList();
+  }
+
+  function resetWaterBtns() {
+    waterQuickBtns = [...DEFAULT_WATER_BTNS];
+    localStorage.setItem('water_quick_btns', JSON.stringify(waterQuickBtns));
+    renderWaterBtnEditorList();
+    showToast('デフォルトに戻しました', false);
   }
 
   function openGoalModal() {
@@ -1978,6 +2029,10 @@ if (absDiff < 0.15) {
   // Androidの戻るボタン処理
   function handleAndroidBack() {
     // モーダルが開いていれば閉じる
+    if (document.getElementById('water-btn-editor') && document.getElementById('water-btn-editor').classList.contains('open')) {
+      closeWaterBtnEditor();
+      return true;
+    }
     if (document.getElementById('activity-picker') && document.getElementById('activity-picker').classList.contains('open')) {
       document.getElementById('activity-picker').classList.remove('open');
       return true;
