@@ -1361,14 +1361,14 @@ if (absDiff < 0.15) {
       }
     }
 
-    // ⑩ 睡眠（前日）→ 成長ホルモン・コルチゾール
-    if (prevRec.sleep != null) {
-      if (prevRec.sleep < 6) {
-        items.push({icon:'😴', cls:'bad', text:`前日の睡眠 <strong>${prevRec.sleep}h</strong>（短い）。睡眠不足はコルチゾール増加→水分貯留・脂肪燃焼低下につながりやすい。`});
-      } else if (prevRec.sleep < 7) {
-        items.push({icon:'😴', cls:'warn', text:`前日の睡眠 <strong>${prevRec.sleep}h</strong>（やや短め）。7h以上確保できると回復・脂肪燃焼効率が改善。`});
+    // ⑩ 睡眠（当日）→ 成長ホルモン・コルチゾール
+    if (r.sleep != null) {
+      if (r.sleep < 6) {
+        items.push({icon:'😴', cls:'bad', text:`当日の睡眠 <strong>${r.sleep}h</strong>（短い）。睡眠不足はコルチゾール増加→水分貯留・脂肪燃焼低下につながりやすい。`});
+      } else if (r.sleep < 7) {
+        items.push({icon:'😴', cls:'warn', text:`当日の睡眠 <strong>${r.sleep}h</strong>（やや短め）。7h以上確保できると回復・脂肪燃焼効率が改善。`});
       } else {
-        items.push({icon:'😴', cls:'good', text:`前日の睡眠 <strong>${prevRec.sleep}h</strong>。十分な睡眠で成長ホルモン分泌・脂肪燃焼をサポートできています。`});
+        items.push({icon:'😴', cls:'good', text:`当日の睡眠 <strong>${r.sleep}h</strong>。十分な睡眠で成長ホルモン分泌・脂肪燃焼をサポートできています。`});
       }
     }
 
