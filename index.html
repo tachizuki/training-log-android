@@ -2503,17 +2503,28 @@ if (absDiff < 0.15) {
   // ==================
   function gymShare() {
     if (gymExercises.length === 0) { showToast('種目がありません'); return; }
+    showToast('生成中...', false);
+    // UIが固まらないようにsetTimeoutで非同期実行
+    setTimeout(() => {
+      try {
+        _buildShareCanvas();
+        document.getElementById('share-overlay').classList.add('open');
+      } catch(e) {
+        showToast('生成に失敗しました');
+      }
+    }, 50);
+  }
 
+  function _buildShareCanvas() {
     const canvas = document.getElementById('share-canvas');
     const ctx = canvas.getContext('2d');
     const W = 720;
     const lineH = 28;
     const padding = 40;
 
-    // 高さ計算
-    let totalLines = 3; // タイトル・日付・部位
+    let totalLines = 3;
     gymExercises.forEach(ex => {
-      totalLines += 2; // 種目名 + ヘッダー
+      totalLines += 2;
       totalLines += ex.sets.length;
       ex.sets.forEach(s => { if(s.memo) totalLines += 0.8; });
     });
@@ -2522,41 +2533,33 @@ if (absDiff < 0.15) {
     canvas.width = W;
     canvas.height = H;
 
-    // 背景
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0,0,W,H);
-
-    // アクセントライン
     ctx.fillStyle = '#e8ff00';
     ctx.fillRect(0,0,4,H);
 
     let y = padding;
 
-    // タイトル
     ctx.fillStyle = '#e8ff00';
     ctx.font = 'bold 32px sans-serif';
     ctx.fillText('TRAINING LOG', padding+10, y+24);
     y += lineH*1.5;
 
-    // 日付・部位
     ctx.fillStyle = '#666';
     ctx.font = '18px sans-serif';
     ctx.fillText(`${gymDate}  ${gymParts.join('・')}`, padding+10, y+18);
     y += lineH*1.5;
 
-    // 区切り線
     ctx.fillStyle = '#2a2a3a';
     ctx.fillRect(padding, y, W-padding*2, 1);
     y += 16;
 
     gymExercises.forEach(ex => {
-      // 種目名
       ctx.fillStyle = '#f0f0f0';
       ctx.font = 'bold 20px sans-serif';
       ctx.fillText(ex.name, padding+10, y+18);
       y += lineH;
 
-      // ヘッダー
       ctx.fillStyle = '#444';
       ctx.font = '13px sans-serif';
       ctx.fillText('SET', padding+10, y+14);
@@ -2589,19 +2592,16 @@ if (absDiff < 0.15) {
         }
       });
 
-      // 区切り
       ctx.fillStyle = '#1a1a26';
       ctx.fillRect(padding, y+4, W-padding*2, 1);
       y += lineH*0.8;
     });
 
-    // フッター
     ctx.fillStyle = '#333';
     ctx.font = '12px sans-serif';
     ctx.fillText('TrainingLog', W-padding-80, H-padding+10);
-
-    document.getElementById('share-overlay').classList.add('open');
   }
+
 
   function downloadShareImage() {
     const canvas = document.getElementById('share-canvas');
