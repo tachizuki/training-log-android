@@ -2605,20 +2605,21 @@ if (absDiff < 0.15) {
 
   function downloadShareImage() {
     const canvas = document.getElementById('share-canvas');
-    const dataUrl = canvas.toDataURL('image/png');
     const filename = `training_${gymDate}_${gymParts.join('-')}.png`;
-    const base64 = dataUrl.replace('data:image/png;base64,', '');
 
-    // AndroidBridge経由でギャラリーに保存
-    if (typeof AndroidBridge !== 'undefined' && AndroidBridge.saveImage) {
-      AndroidBridge.saveImage(base64, filename);
+    // AndroidBridge経由（小さいデータを渡す）
+    if (typeof AndroidBridge !== 'undefined' && AndroidBridge.saveImageJpeg) {
+      // JPEGで圧縮してサイズを削減
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const base64 = dataUrl.replace('data:image/jpeg;base64,', '');
+      AndroidBridge.saveImageJpeg(base64, filename.replace('.png','.jpg'));
       return;
     }
 
     // ブラウザフォールバック
     const link = document.createElement('a');
     link.download = filename;
-    link.href = dataUrl;
+    link.href = canvas.toDataURL('image/png');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
