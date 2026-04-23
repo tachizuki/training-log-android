@@ -531,17 +531,11 @@
     <div class="water-pct" id="water-pct-text">0%</div>
   </div>
 
-  <div class="water-section-title">クイック追加</div>
-  <div class="water-quick-grid">
-    <button class="water-quick-btn" onclick="addWater(100)"><span class="btn-ml">100</span><span class="btn-unit">ml</span></button>
-    <button class="water-quick-btn" onclick="addWater(200)"><span class="btn-ml">200</span><span class="btn-unit">ml</span></button>
-    <button class="water-quick-btn" onclick="addWater(350)"><span class="btn-ml">350</span><span class="btn-unit">ml</span></button>
-    <button class="water-quick-btn" onclick="addWater(500)"><span class="btn-ml">500</span><span class="btn-unit">ml</span></button>
-    <button class="water-quick-btn" onclick="addWater(1000)"><span class="btn-ml">1000</span><span class="btn-unit">ml</span></button>
-    <button class="water-quick-btn custom-btn" onclick="openCustomModal()">
-      <span class="custom-icon">＋</span><span style="font-size:12px;">カスタム</span>
-    </button>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;">
+    <div class="water-section-title" style="margin:0;">クイック追加</div>
+    <button onclick="openWaterBtnEditor()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:12px;padding:4px 10px;cursor:pointer;">✏️ 編集</button>
   </div>
+  <div class="water-quick-grid" id="water-quick-grid"></div>
 
   <div class="water-section-title" style="margin-top:18px;">今日のログ</div>
   <div class="water-log" id="water-log-list"></div>
@@ -713,7 +707,7 @@
     </div>
     <div class="modal-save-check" onclick="toggleSaveCustom()">
       <div class="modal-checkbox" id="save-custom-check"></div>
-      <span class="modal-save-label">マイボタンに保存する</span>
+      <span class="modal-save-label">クイックボタンに追加する</span>
     </div>
     <div class="modal-btns">
       <button class="modal-btn cancel" onclick="closeCustomModal()">キャンセル</button>
@@ -864,7 +858,10 @@
   let records = JSON.parse(localStorage.getItem('training_records') || '[]');
   let weekWeightGoal = parseFloat(localStorage.getItem('week_weight_goal') || '0');
   let waterData = JSON.parse(localStorage.getItem('water_data') || '{}');
-  let customButtons = JSON.parse(localStorage.getItem('water_custom_btns') || '[]');
+  const DEFAULT_WATER_BTNS = [100, 200, 350, 500, 1000];
+  let waterQuickBtns = JSON.parse(localStorage.getItem('water_quick_btns') ||
+    JSON.stringify(JSON.parse(localStorage.getItem('water_custom_btns') || 'null') || DEFAULT_WATER_BTNS));
+  let customButtons = waterQuickBtns;
   let waterGoal = parseInt(localStorage.getItem('water_goal') || '3000');
   let trainingOn = false;
   let selectedMuscles = [];
