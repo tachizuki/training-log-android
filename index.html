@@ -287,11 +287,13 @@
   .gym-exercise-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .gym-exercise-name { font-size: 14px; font-weight: 700; color: var(--text); }
   .gym-exercise-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
-  .gym-set-header { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px 28px; gap: 4px; margin-bottom: 4px; }
+  .gym-drag-handle { color: var(--text-muted); font-size: 16px; cursor: grab; padding: 0 6px 0 0; touch-action: none; user-select: none; }
+  .gym-exercise-card.dragging { opacity: 0.5; border: 1px dashed var(--accent); }
+  .gym-set-header { display: grid; grid-template-columns: 28px 1fr 1fr 50px 24px; gap: 4px; margin-bottom: 4px; }
   .gym-set-header-label { font-size: 9px; color: var(--text-muted); text-align: center; letter-spacing: 0.05em; }
-  .gym-set-row { display: grid; grid-template-columns: 32px 1fr 1fr 60px 28px 28px 28px; gap: 4px; align-items: center; margin-bottom: 5px; }
+  .gym-set-row { display: grid; grid-template-columns: 28px 1fr 1fr 50px 24px; gap: 4px; align-items: center; margin-bottom: 5px; }
   .gym-set-label { font-size: 11px; color: var(--text-muted); text-align: center; }
-  .gym-set-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 4px; color: var(--text); font-size: 13px; text-align: center; outline: none; width: 100%; }
+  .gym-set-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 2px; color: var(--text); font-size: 12px; text-align: center; outline: none; width: 100%; }
   .gym-set-input:focus { border-color: var(--accent); }
   .gym-set-rm { font-size: 10px; color: var(--accent2); text-align: center; line-height: 1.2; }
   .gym-set-assist { display: flex; align-items: center; justify-content: center; }
@@ -887,8 +889,18 @@
   function showScreen(id) {
     document.getElementById('top-screen').style.display = 'none';
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    if (!id) { document.getElementById('top-screen').style.display = 'flex'; updateTodaySummary(); }
-    else document.getElementById(id).classList.add('active');
+    if (!id) {
+      document.getElementById('top-screen').style.display = 'flex';
+      updateTodaySummary();
+    } else {
+      document.getElementById(id).classList.add('active');
+      // 記録画面を開く時に今日の既存データを読み込む
+      if (id === 'record-screen') {
+        const today = formatDate(new Date());
+        document.getElementById('rec-date').value = today;
+        loadRecordByDate(today);
+      }
+    }
   }
 
   function loadRecordByDate(date) {
@@ -980,7 +992,9 @@
 
   // WATER
   function renderWater() {
-    const w = getTodayWater();
+    // 水分画面を開くたびに今日の日付にリセット
+    const todayStr = formatDate(new Date());
+    const w = waterData[todayStr] || {total:0, log:[]};
     updateRing(w.total);
     renderWaterLog(w.log);
     renderCustomButtons();
@@ -1371,23 +1385,27 @@ if (absDiff < 0.15) {
         items.push({icon:'🚶', cls:'warn', text:`前日の歩数 <strong>${prevRec.steps.toLocaleString()}歩</strong>（少なめ）。活動量が低いと消費カロリーが減り体重が落ちにくい。`});
       }
     }
-    if (prevRec.cardioKcal) {
+    if (prevRec.cardioKcal || prevRec.steps) {
       if (prevRec.cardioKcal >= 300) {
         items.push({icon:'🚴', cls:'good', text:`前日の有酸素運動で <strong>${prevRec.cardioKcal}kcal</strong> 消費。脂肪燃焼に効果的。${prevRec.cardioMemo ? `（${prevRec.cardioMemo}）` : ''}`});
       } else {
         items.push({icon:'🚴', cls:'', text:`前日の有酸素運動で <strong>${prevRec.cardioKcal}kcal</strong> 消費。${prevRec.cardioMemo ? `（${prevRec.cardioMemo}）` : ''}`});
       }
       // カロリー収支計算
-      if (prevRec.kcal && prevRec.cardioKcal) {
-        const bmr = getUserBMR() || 1700; // ハリス・ベネディクト or デフォルト1700
-        const balance = prevRec.kcal - bmr - prevRec.cardioKcal;
+      if (prevRec.kcal) {
+        const bmr = getUserBMR() || 1700;
+        const stepsKcal = prevRec.steps ? Math.round((prevRec.weight||63) * prevRec.steps * 0.000539) : 0;
+        const cardioKcal = prevRec.cardioKcal || 0;
+        const totalBurn = bmr + cardioKcal + stepsKcal;
+        const balance = prevRec.kcal - totalBurn;
         const balanceStr = (balance > 0 ? '+' : '') + Math.round(balance);
+        const burnDetail = `基礎代謝${bmr}+有酸素${cardioKcal}+歩行${stepsKcal}`;
         if (balance < -500) {
-          items.push({icon:'📊', cls:'good', text:`前日の推定カロリー収支 <strong>${balanceStr}kcal</strong>。十分な赤字。`});
+          items.push({icon:'📊', cls:'good', text:`前日の推定カロリー収支 <strong>${balanceStr}kcal</strong>。十分な赤字。（${burnDetail}）`});
         } else if (balance < 0) {
-          items.push({icon:'📊', cls:'', text:`前日の推定カロリー収支 <strong>${balanceStr}kcal</strong>。適度な赤字。`});
+          items.push({icon:'📊', cls:'', text:`前日の推定カロリー収支 <strong>${balanceStr}kcal</strong>。適度な赤字。（${burnDetail}）`});
         } else {
-          items.push({icon:'📊', cls:'warn', text:`前日の推定カロリー収支 <strong>+${Math.round(balance)}kcal</strong>。黒字気味。体重増加につながりやすい。`});
+          items.push({icon:'📊', cls:'warn', text:`前日の推定カロリー収支 <strong>${balanceStr}kcal</strong>。黒字気味。体重増加につながりやすい。（${burnDetail}）`});
         }
       }
     }
@@ -1466,7 +1484,10 @@ if (absDiff < 0.15) {
       if(r.salt) tags.push(`<span class="tag tag-salt">🧂 塩分${r.salt}g</span>`);
       if(r.sleep) tags.push(`<span class="tag tag-sleep">😴 ${r.sleep}h</span>`);
       if(r.salon) tags.push(`<span class="tag tag-salon">🌞 ${r.salon}分</span>`);
-      if(r.steps) tags.push(`<span class="tag tag-steps">🚶 ${r.steps.toLocaleString()}歩</span>`);
+      if(r.steps) {
+        const stepsKcal = Math.round((r.weight||63) * r.steps * 0.000539);
+        tags.push(`<span class="tag tag-steps">🚶 ${r.steps.toLocaleString()}歩 (≈${stepsKcal}kcal)</span>`);
+      }
       if(r.cardioKcal) tags.push(`<span class="tag tag-cardio">🔥 有酸素${r.cardioKcal}kcal</span>`);
       const memo=r.memo?`<div class="record-memo">${r.memo}</div>`:'';
       const analysis = buildAnalysisHTML(r, r.date);
@@ -1616,7 +1637,9 @@ if (absDiff < 0.15) {
   function calcRM(weight, reps) {
     if (!weight || !reps || reps <= 0) return null;
     if (reps === 1) return weight;
-    return Math.round(weight * (1 + reps / 30) * 10) / 10;
+    if (reps > 20) return null; // 20rep超は1RM推定精度が低い
+    // Brzycki式: weight / (1.0278 - 0.0278 * reps)
+    return Math.round((weight / (1.0278 - 0.0278 * reps)) * 10) / 10;
   }
 
   function renderGym() {
@@ -1695,7 +1718,6 @@ if (absDiff < 0.15) {
           <span class="gym-set-header-label">回数</span>
           <span class="gym-set-header-label">1RM</span>
           <span class="gym-set-header-label">補</span>
-          <span class="gym-set-header-label">複製</span>
         </div>`;
       const setsHTML = ex.sets.map((s, si) => {
         const rm = calcRM(s.weight, s.reps);
@@ -1720,15 +1742,18 @@ if (absDiff < 0.15) {
             <div class="gym-set-assist">
               <div class="gym-assist-check ${assistClass}" onclick="gymToggleAssist(${ei},${si})"></div>
             </div>
-            <button class="gym-set-copy-btn" onclick="gymCopySet(${ei},${si})" title="このセットを次に複製">⧉</button>
-            <button class="gym-set-del" onclick="gymDelSet(${ei},${si})">✕</button>
           </div>
-          <input type="text" class="gym-set-memo" placeholder="メモ（空欄可）" value="${s.memo||''}"
-            onchange="gymUpdateSet(${ei},${si},'memo',this.value)">`;
+          <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+            <input type="text" class="gym-set-memo" placeholder="メモ（空欄可）" value="${s.memo||''}"
+              onchange="gymUpdateSet(${ei},${si},'memo',this.value)" style="flex:1;">
+            <button class="gym-set-copy-btn" onclick="gymCopySet(${ei},${si})" title="複製" style="flex-shrink:0;">⧉</button>
+            <button class="gym-set-del" onclick="gymDelSet(${ei},${si})" style="flex-shrink:0;">✕</button>
+          </div>`;
       }).join('');
       return `
         <div class="gym-exercise-card">
           <div class="gym-exercise-header">
+            <span class="gym-drag-handle" onpointerdown="gymDragStart(event,${ei})">☰</span>
             <span class="gym-exercise-name">${ex.name}</span>
             <button class="gym-exercise-del" onclick="gymDelExercise(${ei})">✕</button>
           </div>
@@ -1830,6 +1855,46 @@ if (absDiff < 0.15) {
   // 画面を離れる時にストップウォッチをリセット
   const _origShowScreen = showScreen;
 
+  // ドラッグ並び替え
+  let dragSrcIdx = null;
+  let dragEl = null;
+
+  function gymDragStart(e, ei) {
+    dragSrcIdx = ei;
+    dragEl = e.target.closest('.gym-exercise-card');
+    if (dragEl) dragEl.classList.add('dragging');
+
+    const startY = e.clientY || e.touches?.[0]?.clientY;
+    const cards = () => document.querySelectorAll('.gym-exercise-card');
+
+    function onMove(ev) {
+      const y = ev.clientY || ev.touches?.[0]?.clientY;
+      let targetIdx = null;
+      cards().forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        if (y > rect.top && y < rect.bottom) targetIdx = i;
+      });
+      if (targetIdx !== null && targetIdx !== dragSrcIdx) {
+        const item = gymExercises.splice(dragSrcIdx, 1)[0];
+        gymExercises.splice(targetIdx, 0, item);
+        dragSrcIdx = targetIdx;
+        renderGymExercises();
+        dragEl = document.querySelectorAll('.gym-exercise-card')[dragSrcIdx];
+        if (dragEl) dragEl.classList.add('dragging');
+      }
+    }
+
+    function onEnd() {
+      if (dragEl) dragEl.classList.remove('dragging');
+      dragSrcIdx = null; dragEl = null;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onEnd);
+    }
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onEnd);
+  }
+
   function gymCopySet(ei, si) {
     const src = gymExercises[ei].sets[si];
     const copy = {weight: src.weight, reps: src.reps, assist: src.assist, memo: ''};
@@ -1858,6 +1923,25 @@ if (absDiff < 0.15) {
     if (!gymData[key]) gymData[key] = {};
     gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
     localStorage.setItem('gym_data', JSON.stringify(gymData));
+
+    // 日々記録にも筋トレ部位を自動反映
+    const recIdx = records.findIndex(r => r.date === gymDate);
+    if (recIdx >= 0) {
+      records[recIdx].trained = gymExercises.length > 0;
+      records[recIdx].muscles = [...new Set([...(records[recIdx].muscles||[]), ...gymParts])];
+      localStorage.setItem('training_records', JSON.stringify(records));
+    } else if (gymExercises.length > 0) {
+      // 記録がない日でも筋トレメモがあれば新規作成
+      const newRec = {
+        date: gymDate, weight:null, sleep:null, p:null, f:null, c:null,
+        kcal:null, salt:null, steps:null, activities:[], cardioKcal:null,
+        salon:null, trained:true, muscles:[...gymParts], memo:''
+      };
+      records.push(newRec);
+      records.sort((a,b)=>b.date.localeCompare(a.date));
+      localStorage.setItem('training_records', JSON.stringify(records));
+    }
+
     showToast('保存しました ✓', false);
     setTimeout(() => showScreen(null), 600);
   }
@@ -1924,17 +2008,27 @@ if (absDiff < 0.15) {
 
   function filterGymPicker() {
     const q = document.getElementById('gym-picker-search').value.toLowerCase();
-    // 選択中の全部位のプリセットをマージ（重複排除）
     const allPresets = [...new Set(gymParts.flatMap(p => GYM_PRESETS[p] || []))];
     const filtered = q ? allPresets.filter(p=>p.toLowerCase().includes(q)) : allPresets;
-    document.getElementById('gym-picker-list').innerHTML = filtered.map(p =>
-      `<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`
-    ).join('');
+    const filteredCustom = customGymExercises.filter(p => (!q || p.toLowerCase().includes(q)) && !allPresets.includes(p));
+    let html = '';
+    if (filteredCustom.length > 0) {
+      html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px;">⭐ マイ種目</div>';
+      html += filteredCustom.map(p => `<button class="gym-picker-item" style="border-color:rgba(232,255,0,0.3);color:var(--accent);" onclick="gymAddExercise('${p}')">${p}</button>`).join('');
+      if (filtered.length > 0) html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.2em;text-transform:uppercase;margin:10px 0 6px;">プリセット</div>';
+    }
+    html += filtered.map(p => `<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`).join('');
+    document.getElementById('gym-picker-list').innerHTML = html;
   }
 
   function addCustomGymExercise() {
     const name = document.getElementById('gym-picker-search').value.trim();
     if (!name) { showToast('種目名を入力してください'); return; }
+    // カスタム種目を記憶
+    if (!customGymExercises.includes(name)) {
+      customGymExercises.push(name);
+      localStorage.setItem('custom_gym_exercises', JSON.stringify(customGymExercises));
+    }
     gymAddExercise(name);
   }
 
@@ -2142,6 +2236,8 @@ if (absDiff < 0.15) {
   // ACTIVITY (運動記録)
   // ==================
   let recActivities = [];
+  let customActivities = JSON.parse(localStorage.getItem('custom_activities') || '[]');
+  let customGymExercises = JSON.parse(localStorage.getItem('custom_gym_exercises') || '[]');
 
   // METデータ（カテゴリ：種目：MET値）
   const ACTIVITY_PRESETS = [
@@ -2226,6 +2322,20 @@ if (absDiff < 0.15) {
     const q = document.getElementById('activity-search').value.toLowerCase();
     const el = document.getElementById('activity-picker-list');
     let html = '';
+    // カスタム運動を先に表示
+    const filteredCustom = customActivities.filter(a => !q || a.name.toLowerCase().includes(q));
+    if (filteredCustom.length > 0) {
+      html += `<div class="activity-picker-category">⭐ マイ種目</div>`;
+      filteredCustom.forEach(a => {
+        html += `<div class="activity-picker-item" onclick="addActivityFromPreset('${a.name}',${a.kcalPerMin||0},'${a.icon||'🏃'}')">
+          <div class="activity-picker-item-left">
+            <span class="activity-picker-item-icon">${a.icon||'🏃'}</span>
+            <span class="activity-picker-item-name">${a.name}</span>
+          </div>
+          <span class="activity-picker-item-met">${a.kcalPerMin||0}kcal/分</span>
+        </div>`;
+      });
+    }
     for (const cat of ACTIVITY_PRESETS) {
       const filtered = q ? cat.items.filter(it=>it.name.toLowerCase().includes(q)) : cat.items;
       if (filtered.length === 0) continue;
@@ -2322,6 +2432,11 @@ if (absDiff < 0.15) {
     const name = document.getElementById('activity-custom-name').value.trim();
     const kcalPerMin = parseFloat(document.getElementById('activity-custom-kcal').value)||0;
     if (!name) { showToast('種目名を入力してください'); return; }
+    // カスタム運動を記憶
+    if (!customActivities.find(a=>a.name===name)) {
+      customActivities.push({name, kcalPerMin, icon:'🏃'});
+      localStorage.setItem('custom_activities', JSON.stringify(customActivities));
+    }
     if (window._editActivityMode) {
       editActivities.push({name, kcalPerMin, icon:'🏃', minutes:30, kcal:0});
       renderEditActivityList();
