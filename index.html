@@ -2607,30 +2607,21 @@ if (absDiff < 0.15) {
     const canvas = document.getElementById('share-canvas');
     const dataUrl = canvas.toDataURL('image/png');
     const filename = `training_${gymDate}_${gymParts.join('-')}.png`;
+    const base64 = dataUrl.replace('data:image/png;base64,', '');
 
-    // Web Share API（AndroidのWebViewで動作）
-    canvas.toBlob(async (blob) => {
-      if (navigator.share && navigator.canShare) {
-        try {
-          const file = new File([blob], filename, {type: 'image/png'});
-          if (navigator.canShare({files: [file]})) {
-            await navigator.share({files: [file], title: 'TrainingLog'});
-            return;
-          }
-        } catch(e) {
-          if (e.name !== 'AbortError') console.log('share error:', e);
-        }
-      }
-      // フォールバック: 新しいタブで画像を開く
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      if (!win) {
-        // window.openが失敗した場合はimgタグで表示
-        const img = document.getElementById('share-img-fallback');
-        if (img) { img.src = dataUrl; img.style.display = 'block'; }
-        showToast('長押しで画像を保存してください', false);
-      }
-    }, 'image/png');
+    // AndroidBridge経由でギャラリーに保存
+    if (typeof AndroidBridge !== 'undefined' && AndroidBridge.saveImage) {
+      AndroidBridge.saveImage(base64, filename);
+      return;
+    }
+
+    // ブラウザフォールバック
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // ==================
