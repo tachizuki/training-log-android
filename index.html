@@ -1886,19 +1886,61 @@ if (absDiff < 0.15) {
   }
 
   function loadGymData() {
+    // 選択中の部位のデータを読み込む（編集用）
     const key = getGymKey();
     const saved = gymData[key] || {exercises:[]};
     gymExercises = JSON.parse(JSON.stringify(saved.exercises || []));
+
+    // その日の全部位のデータをまとめて表示
     renderGymExercises();
+  }
+
+  function getAllDayExercises() {
+    // その日保存済みの全部位データを取得
+    const allParts = {};
+    Object.keys(gymData)
+      .filter(k => k.startsWith(gymDate + '_'))
+      .sort()
+      .forEach(key => {
+        const part = key.replace(gymDate + '_', '');
+        const data = gymData[key];
+        if (data.exercises && data.exercises.length > 0) {
+          allParts[part] = data.exercises;
+        }
+      });
+    return allParts;
   }
 
   function renderGymExercises() {
     const list = document.getElementById('gym-exercise-list');
-    if (gymExercises.length === 0) {
+
+    // 保存済みの他部位データを上部に表示
+    const allParts = getAllDayExercises();
+    const currentKey = getGymKey();
+    const currentPartLabel = gymParts.join('+');
+    let otherPartsHTML = '';
+
+    Object.entries(allParts).forEach(([part, exercises]) => {
+      if (part === currentPartLabel) return; // 現在の部位はスキップ
+      otherPartsHTML += `<div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.15em;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:8px;">📌 ${part}（保存済み）</div>
+        ${exercises.map(ex => {
+          const setsText = ex.sets.map((s,i) =>
+            `<span style="color:var(--text-muted);font-size:12px;">${i+1}: ${s.weight||'—'}kg×${s.reps||'—'}rep${s.assist?' 補':''}</span>`
+          ).join('　');
+          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">${ex.name}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${setsText}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+
+    if (gymExercises.length === 0 && !otherPartsHTML) {
       list.innerHTML = '<div class="empty-state" style="padding:20px 0;"><div class="empty-state-icon">🏋️</div><div class="empty-state-text">種目を追加してください</div></div>';
       return;
     }
-    list.innerHTML = gymExercises.map((ex, ei) => {
+    const exerciseCards = gymExercises.map((ex, ei) => {
       const headerRow = `
         <div class="gym-set-header">
           <span class="gym-set-header-label">SET</span>
@@ -1951,6 +1993,7 @@ if (absDiff < 0.15) {
           <button class="gym-add-set-btn" onclick="gymAddSet(${ei})">＋ セットを追加</button>
         </div>`;
     }).join('');
+    list.innerHTML = otherPartsHTML + (gymExercises.length > 0 && Object.keys(allParts).some(p=>p!==currentPartLabel) ? `<div style="font-size:11px;color:var(--text-muted);letter-spacing:0.15em;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:8px;">✏️ ${currentPartLabel}（編集中）</div>` : '') + exerciseCards.join('');
   }
 
   function gymUpdateSet(ei, si, field, val) {
