@@ -2624,12 +2624,17 @@ if (absDiff < 0.15) {
   // SHARE (Canvas)
   // ==================
   function gymShare() {
-    // その日のデータ（全部位）または現在入力中のデータがあればOK
-    const hasData = gymExercises.length > 0 ||
-      Object.keys(gymData).some(k => k.startsWith(gymDate+'_') && gymData[k].exercises?.length > 0);
-    if (!hasData) { showToast('この日の記録がありません'); return; }
+    if (gymExercises.length === 0 && !Object.keys(gymData).some(k => k.startsWith(gymDate+'_') && gymData[k].exercises?.length > 0)) {
+      showToast('この日の記録がありません'); return;
+    }
+    // シェア前に現在のデータを自動保存
+    if (gymExercises.length > 0) {
+      const key = getGymKey();
+      if (!gymData[key]) gymData[key] = {};
+      gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
+      localStorage.setItem('gym_data', JSON.stringify(gymData));
+    }
     showToast('生成中...', false);
-    // UIが固まらないようにsetTimeoutで非同期実行
     setTimeout(() => {
       try {
         _buildShareCanvas();
