@@ -1883,29 +1883,30 @@ if (absDiff < 0.15) {
   }
 
   function loadGymData() {
-    // 選択中の部位のデータを読み込む（編集用）
     const key = getGymKey();
-    const saved = gymData[key] || {exercises:[]};
-    gymExercises = JSON.parse(JSON.stringify(saved.exercises || []));
+    let exercises = [];
 
-    // その日の全部位のデータをまとめて表示
+    // 新形式（日付のみキー）
+    if (gymData[key] && gymData[key].exercises) {
+      exercises = gymData[key].exercises;
+    } else {
+      // 旧形式（日付_部位キー）を全部マージ
+      Object.keys(gymData)
+        .filter(k => k.startsWith(gymDate + '_'))
+        .sort()
+        .forEach(k => {
+          const data = gymData[k];
+          if (data.exercises) exercises = exercises.concat(data.exercises);
+        });
+      // 旧形式データがあれば新形式に変換して保存
+      if (exercises.length > 0) {
+        gymData[key] = {exercises};
+        localStorage.setItem('gym_data', JSON.stringify(gymData));
+      }
+    }
+
+    gymExercises = JSON.parse(JSON.stringify(exercises));
     renderGymExercises();
-  }
-
-  function getAllDayExercises() {
-    // その日保存済みの全部位データを取得
-    const allParts = {};
-    Object.keys(gymData)
-      .filter(k => k.startsWith(gymDate + '_'))
-      .sort()
-      .forEach(key => {
-        const part = key.replace(gymDate + '_', '');
-        const data = gymData[key];
-        if (data.exercises && data.exercises.length > 0) {
-          allParts[part] = data.exercises;
-        }
-      });
-    return allParts;
   }
 
   function renderGymExercises() {
