@@ -2674,13 +2674,22 @@ if (absDiff < 0.15) {
     const padding = 36;
 
     // 高さを事前計算
-    let totalLines = 3;
+    // 高さを正確に計算（実際の描画と同じロジックで計算）
+    let calcY = padding;
+    calcY += lineH * 1.5; // タイトル
+    calcY += lineH * 1.5; // 日付
+    calcY += 16;           // 区切り線
     allExercises.forEach(ex => {
-      totalLines += 2;
-      totalLines += (ex.sets || []).length;
-      (ex.sets || []).forEach(s => { if (s.memo) totalLines += 0.8; });
+      calcY += lineH;        // 種目名
+      calcY += lineH * 0.8;  // ヘッダー行
+      (ex.sets || []).forEach(s => {
+        calcY += lineH;      // セット行
+        if (s.memo) calcY += lineH * 0.8; // メモ行
+      });
+      calcY += lineH * 0.8;  // 区切り線
     });
-    const H = Math.ceil(padding * 2 + totalLines * lineH + 20);
+    calcY += 20; // フッター余白
+    const H = Math.ceil(calcY) + 40; // 余裕を持たせる
 
     canvas.width = W;
     canvas.height = H;
