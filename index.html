@@ -2649,47 +2649,31 @@ if (absDiff < 0.15) {
     const canvas = document.getElementById('share-canvas');
     const ctx = canvas.getContext('2d');
 
-    // まず現在編集中データを保存済みに反映してから全部位を集める
-    const currentKey = getGymKey();
-    const snapshot = JSON.parse(JSON.stringify(gymData));
-    if (gymExercises.length > 0) {
-      if (!snapshot[currentKey]) snapshot[currentKey] = {};
-      snapshot[currentKey].exercises = JSON.parse(JSON.stringify(gymExercises));
-    }
+    // gymExercisesを直接使用（保存済み・未保存問わず現在の全データ）
+    const allExercises = gymExercises;
+    const partLabel = gymParts.join('・');
 
-    const allExercises = [];
-    const displayParts = new Set();
-    Object.keys(snapshot).filter(k => k.startsWith(gymDate + '_')).sort().forEach(key => {
-      const part = key.replace(gymDate + '_', '');
-      const data = snapshot[key];
-      if (data.exercises && data.exercises.length > 0) {
-        displayParts.add(part);
-        data.exercises.forEach(ex => allExercises.push({...ex, _part: part}));
-      }
-    });
-
-    const partLabel = [...displayParts].join('・') || gymParts.join('・');
     const W = 720;
     const lineH = 26;
     const padding = 36;
 
-    // 高さを事前計算
-    // 高さを正確に計算（実際の描画と同じロジックで計算）
+    // 描画と同じロジックで高さを計算
     let calcY = padding;
     calcY += lineH * 1.5; // タイトル
-    calcY += lineH * 1.5; // 日付
+    calcY += lineH * 1.5; // 日付・部位
     calcY += 16;           // 区切り線
     allExercises.forEach(ex => {
       calcY += lineH;        // 種目名
       calcY += lineH * 0.8;  // ヘッダー行
       (ex.sets || []).forEach(s => {
-        calcY += lineH;      // セット行
-        if (s.memo) calcY += lineH * 0.8; // メモ行
+        calcY += lineH;
+        if (s.memo) calcY += lineH * 0.8;
       });
       calcY += lineH * 0.8;  // 区切り線
     });
-    calcY += 20; // フッター余白
-    const H = Math.ceil(calcY) + 40; // 余裕を持たせる
+    calcY += 40; // フッター余白
+
+    const H = Math.ceil(calcY);
 
     canvas.width = W;
     canvas.height = H;
