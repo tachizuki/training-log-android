@@ -589,15 +589,7 @@
     <button class="gym-action-btn" onclick="openTimer()">⏱ タイマー</button>
     <button class="gym-action-btn" onclick="gymShare()">📷 シェア</button>
   </div>
-  <div style="padding:6px 20px 0;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;">複数選択可</div>
-  <div class="gym-part-bar" id="gym-part-bar">
-    <button class="gym-part-btn active" onclick="gymSelectPart('胸',this)">胸</button>
-    <button class="gym-part-btn" onclick="gymSelectPart('背中',this)">背中</button>
-    <button class="gym-part-btn" onclick="gymSelectPart('肩',this)">肩</button>
-    <button class="gym-part-btn" onclick="gymSelectPart('腕',this)">腕</button>
-    <button class="gym-part-btn" onclick="gymSelectPart('足',this)">足</button>
-    <button class="gym-part-btn" onclick="gymSelectPart('腹筋',this)">腹筋</button>
-  </div>
+
   <div class="gym-body">
     <div class="gym-stopwatch">
       <div class="gym-stopwatch-time" id="sw-display">00:00:00</div>
@@ -1817,18 +1809,15 @@ if (absDiff < 0.15) {
 
   // 種目ごとの前回記録を取得
   function getPrevExerciseData(exerciseName) {
-    // gymDataから同種目の直近記録を探す
     const keys = Object.keys(gymData)
-      .filter(k => k.startsWith(gymDate) === false) // 今日以外
+      .filter(k => k < gymDate)
       .sort().reverse();
-
     for (const key of keys) {
       const data = gymData[key];
       if (!data.exercises) continue;
       const ex = data.exercises.find(e => e.name === exerciseName);
       if (ex && ex.sets && ex.sets.length > 0) {
-        const date = key.split('_')[0];
-        return { date, sets: ex.sets };
+        return { date: key, sets: ex.sets };
       }
     }
     return null;
@@ -1845,12 +1834,7 @@ if (absDiff < 0.15) {
 
   function renderGym() {
     gymDate = gymDate || formatDate(new Date());
-    gymParts = gymParts.length ? gymParts : ['胸'];
     updateGymDateLabel();
-    // ボタンの状態を復元
-    document.querySelectorAll('.gym-part-btn').forEach(b => {
-      b.classList.toggle('active', gymParts.includes(b.textContent.trim()));
-    });
     loadGymData();
   }
 
@@ -1895,7 +1879,7 @@ if (absDiff < 0.15) {
   }
 
   function getGymKey() {
-    return gymDate + '_' + [...gymParts].sort().join('+');
+    return gymDate;
   }
 
   function loadGymData() {
@@ -1926,33 +1910,8 @@ if (absDiff < 0.15) {
 
   function renderGymExercises() {
     const list = document.getElementById('gym-exercise-list');
-    const allParts = getAllDayExercises();
-    const currentPartLabel = gymParts.join('+');
 
-    // 保存済み他部位を上部に表示
-    let otherPartsHTML = '';
-    Object.entries(allParts).forEach(([part, exercises]) => {
-      if (part === currentPartLabel) return;
-      otherPartsHTML += `<div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.1em;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:8px;">📌 ${part}（保存済み）</div>
-        ${exercises.map(ex => {
-          const setsText = ex.sets.map((s,i) =>
-            `<span style="color:var(--text-muted);font-size:12px;">${i+1}: ${s.weight||'—'}kg×${s.reps||'—'}rep${s.assist?' 補':''}</span>`
-          ).join('　');
-          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">${ex.name}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">${setsText}</div>
-          </div>`;
-        }).join('')}
-      </div>`;
-    });
-
-    // 編集中の部位ラベル（他部位が表示されている場合のみ）
-    const editingLabel = otherPartsHTML && gymExercises.length > 0
-      ? `<div style="font-size:11px;color:var(--accent);letter-spacing:0.1em;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:8px;">✏️ ${currentPartLabel}（編集中）</div>`
-      : '';
-
-    if (gymExercises.length === 0 && !otherPartsHTML) {
+    if (gymExercises.length === 0) {
       list.innerHTML = '<div class="empty-state" style="padding:20px 0;"><div class="empty-state-icon">🏋️</div><div class="empty-state-text">種目を追加してください</div></div>';
       return;
     }
@@ -1993,7 +1952,7 @@ if (absDiff < 0.15) {
           <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
             <input type="text" class="gym-set-memo" placeholder="メモ（空欄可）" value="${s.memo||''}"
               onchange="gymUpdateSet(${ei},${si},'memo',this.value)" style="flex:1;">
-            <button class="gym-set-copy-btn" onclick="gymCopySet(${ei},${si})" title="複製" style="flex-shrink:0;">⧉</button>
+            <button class="gym-set-copy-btn" onclick="gymCopySet(${ei},${si})" style="flex-shrink:0;">⧉</button>
             <button class="gym-set-del" onclick="gymDelSet(${ei},${si})" style="flex-shrink:0;">✕</button>
           </div>`;
       }).join('');
@@ -2011,7 +1970,7 @@ if (absDiff < 0.15) {
         </div>`;
     });
 
-    list.innerHTML = otherPartsHTML + editingLabel + exerciseCards.join('');
+    list.innerHTML = exerciseCards.join('');
   }
 
   function gymUpdateSet(ei, si, field, val) {
@@ -2260,42 +2219,22 @@ if (absDiff < 0.15) {
     gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
     localStorage.setItem('gym_data', JSON.stringify(gymData));
 
-    // 日々記録にも筋トレ部位を自動反映
-    const recIdx = records.findIndex(r => r.date === gymDate);
-    if (recIdx >= 0) {
-      records[recIdx].trained = gymExercises.length > 0;
-      records[recIdx].muscles = [...new Set([...(records[recIdx].muscles||[]), ...gymParts])];
-      localStorage.setItem('training_records', JSON.stringify(records));
-    } else if (gymExercises.length > 0) {
-      // 記録がない日でも筋トレメモがあれば新規作成
-      const newRec = {
-        date: gymDate, weight:null, sleep:null, p:null, f:null, c:null,
-        kcal:null, salt:null, steps:null, activities:[], cardioKcal:null,
-        salon:null, trained:true, muscles:[...gymParts], memo:''
-      };
-      records.push(newRec);
-      records.sort((a,b)=>b.date.localeCompare(a.date));
-      localStorage.setItem('training_records', JSON.stringify(records));
-    }
+
 
     showToast('保存しました ✓', false);
-    setTimeout(() => showScreen(null), 600);
   }
 
   // 前回コピー
   function gymCopyPrev() {
-    const partKey = [...gymParts].sort().join('+');
-    const currentKey = getGymKey();
     const keys = Object.keys(gymData)
-      .filter(k => k.includes('_'+partKey) && k < currentKey)
+      .filter(k => k < gymDate && gymData[k].exercises?.length > 0)
       .sort().reverse();
     if (keys.length === 0) { showToast('前回のデータがありません'); return; }
     const prev = gymData[keys[0]];
     gymExercises = JSON.parse(JSON.stringify(prev.exercises || []));
     gymExercises.forEach(ex => ex.sets.forEach(s => { s.memo = ''; }));
     renderGymExercises();
-    const prevDate = keys[0].split('_')[0];
-    showToast(`${prevDate}の記録をコピーしました`, false);
+    showToast(`${keys[0]}の記録をコピーしました`, false);
   }
 
   // PICKER
@@ -2507,19 +2446,43 @@ if (absDiff < 0.15) {
     renderPresetEditorList();
   }
 
+  let gymPickerCatFilter = null; // null=全て表示
+
   function filterGymPicker() {
     const q = document.getElementById('gym-picker-search').value.toLowerCase();
-    const allPresets = [...new Set(gymParts.flatMap(p => gymPresets[p] || GYM_PRESETS[p] || []))];
-    const filtered = q ? allPresets.filter(p=>p.toLowerCase().includes(q)) : allPresets;
-    const filteredCustom = customGymExercises.filter(p => (!q || p.toLowerCase().includes(q)) && !allPresets.includes(p));
+    const el = document.getElementById('gym-picker-list');
     let html = '';
-    if (filteredCustom.length > 0) {
-      html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px;">⭐ マイ種目</div>';
-      html += filteredCustom.map(p => `<button class="gym-picker-item" style="border-color:rgba(232,255,0,0.3);color:var(--accent);" onclick="gymAddExercise('${p}')">${p}</button>`).join('');
-      if (filtered.length > 0) html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.2em;text-transform:uppercase;margin:10px 0 6px;">プリセット</div>';
+
+    // カテゴリフィルターボタン
+    const cats = Object.keys(gymPresets || GYM_PRESETS);
+    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <button onclick="setGymPickerCat(null)" style="padding:4px 10px;border-radius:12px;border:1px solid ${gymPickerCatFilter===null?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===null?'var(--accent)':'transparent'};color:${gymPickerCatFilter===null?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">すべて</button>
+      ${cats.map(c=>`<button onclick="setGymPickerCat('${c}')" style="padding:4px 10px;border-radius:12px;border:1px solid ${gymPickerCatFilter===c?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===c?'var(--accent)':'transparent'};color:${gymPickerCatFilter===c?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">${c}</button>`).join('')}
+    </div>`;
+
+    // カスタム種目
+    const filteredCustom = customGymExercises.filter(p => (!q || p.toLowerCase().includes(q)));
+    if (filteredCustom.length > 0 && !gymPickerCatFilter) {
+      html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:6px;">⭐ マイ種目</div>';
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${filteredCustom.map(p => `<button class="gym-picker-item" style="border-color:rgba(232,255,0,0.3);color:var(--accent);" onclick="gymAddExercise('${p}')">${p}</button>`).join('')}</div>`;
     }
-    html += filtered.map(p => `<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`).join('');
-    document.getElementById('gym-picker-list').innerHTML = html;
+
+    // カテゴリ別プリセット
+    const presets = gymPresets || GYM_PRESETS;
+    const displayCats = gymPickerCatFilter ? [gymPickerCatFilter] : cats;
+    displayCats.forEach(cat => {
+      const items = (presets[cat] || []).filter(p => !q || p.toLowerCase().includes(q));
+      if (items.length === 0) return;
+      html += `<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:6px;">${cat}</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${items.map(p=>`<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`).join('')}</div>`;
+    });
+
+    el.innerHTML = html || '<div style="color:var(--text-muted);padding:16px;text-align:center;">該当なし</div>';
+  }
+
+  function setGymPickerCat(cat) {
+    gymPickerCatFilter = cat;
+    filterGymPicker();
   }
 
   function addCustomGymExercise() {
