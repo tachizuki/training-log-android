@@ -342,8 +342,9 @@
   .gym-picker-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; }
   .gym-picker-input:focus { border-color: var(--accent); }
   .gym-picker-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 180px; overflow-y: auto; }
-  .gym-picker-item { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; }
-  .gym-picker-item:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .gym-picker-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; cursor: pointer; width: 100%; text-align: left; border-radius: 0; border-left: none; border-right: none; border-top: none; }
+  .gym-picker-item:active { background: var(--surface); }
+  .gym-picker-item-drag { color: var(--text-muted); font-size: 20px; cursor: grab; padding: 4px 12px; touch-action: none; user-select: none; }
   .gym-picker-custom-btn { width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; cursor: pointer; margin-top: 12px; }
   .gym-preset-item { display: flex; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 1px solid var(--border); }
   .gym-preset-item-name { flex: 1; font-size: 14px; color: var(--text); }
@@ -610,15 +611,24 @@
 </div>
 
 <!-- GYM PICKER -->
-<div class="gym-exercise-picker" id="gym-picker" onclick="handleGymPickerOverlay(event)">
+<div class="gym-exercise-picker" id="gym-picker">
   <div class="gym-picker-sheet">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div class="gym-picker-title" style="margin:0;">種目を選択</div>
-      <button onclick="openGymPresetEditor()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:12px;padding:4px 10px;cursor:pointer;">✏️ 編集</button>
+    <!-- ヘッダー -->
+    <div style="display:flex;align-items:center;padding-top:max(48px,env(safe-area-inset-top));padding-right:20px;padding-bottom:16px;padding-left:20px;background:var(--accent);gap:12px;">
+      <button onclick="closeGymPicker()" style="background:none;border:none;color:var(--bg);font-size:22px;cursor:pointer;padding:0;line-height:1;font-weight:bold;">←</button>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--bg);flex:1;letter-spacing:0.05em;">種目を選択</div>
+      <button onclick="openGymPresetEditor()" style="background:none;border:1px solid rgba(0,0,0,0.3);border-radius:8px;color:var(--bg);font-size:13px;padding:5px 12px;cursor:pointer;">編集</button>
     </div>
-    <input type="text" class="gym-picker-input" id="gym-picker-search" placeholder="種目名を入力または検索..." oninput="filterGymPicker()">
+    <!-- 検索 -->
+    <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
+      <input type="text" class="gym-picker-input" id="gym-picker-search" placeholder="種目を検索..." oninput="filterGymPicker()" style="margin:0;">
+    </div>
+    <!-- 種目リスト -->
     <div class="gym-picker-list" id="gym-picker-list"></div>
-    <button class="gym-picker-custom-btn" onclick="addCustomGymExercise()">このまま追加</button>
+    <!-- カスタム追加 -->
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);">
+      <button class="gym-picker-custom-btn" onclick="addCustomGymExercise()">入力した名前で追加</button>
+    </div>
   </div>
 </div>
 
@@ -2220,9 +2230,42 @@ if (absDiff < 0.15) {
     gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
     localStorage.setItem('gym_data', JSON.stringify(gymData));
 
+    // 日々記録に筋トレ情報を自動反映
+    if (gymExercises.length > 0) {
+      const recIdx = records.findIndex(r => r.date === gymDate);
+      // 種目名から部位を推定
+      const muscleMap = {
+        '胸':['ベンチプレス','フライ','ペックデック','ディップス','チェストプレス'],
+        '背中':['デッドリフト','ラットプルダウン','チンニング','ロウ','バックエクステンション','Tバー'],
+        '肩':['ショルダープレス','サイドレイズ','フロントレイズ','リアレイズ','アーノルド','フェイスプル'],
+        '腕':['カール','スカルクラッシャー','プッシュダウン','クローズグリップ'],
+        '足':['スクワット','レッグプレス','ブルガリアン','レッグエクステ','レッグカール','アウターサイ','ルーマニアン','ハック'],
+        '腹筋':['クランチ','レッグレイズ','プランク','ツイスト','アブローラー','ハンギング'],
+      };
+      const detectedMuscles = new Set();
+      gymExercises.forEach(ex => {
+        Object.entries(muscleMap).forEach(([muscle, keywords]) => {
+          if (keywords.some(kw => ex.name.includes(kw))) detectedMuscles.add(muscle);
+        });
+      });
+      const muscles = detectedMuscles.size > 0 ? [...detectedMuscles] : ['筋トレ'];
 
+      if (recIdx >= 0) {
+        records[recIdx].trained = true;
+        records[recIdx].muscles = [...new Set([...(records[recIdx].muscles||[]), ...muscles])];
+      } else {
+        records.push({
+          date: gymDate, weight:null, sleep:null, p:null, f:null, c:null,
+          kcal:null, salt:null, steps:null, activities:[], cardioKcal:null,
+          salon:null, trained:true, muscles, memo:''
+        });
+        records.sort((a,b) => b.date.localeCompare(a.date));
+      }
+      localStorage.setItem('training_records', JSON.stringify(records));
+    }
 
     showToast('保存しました ✓', false);
+    setTimeout(() => showScreen(null), 600);
   }
 
   // 前回コピー
@@ -2341,7 +2384,7 @@ if (absDiff < 0.15) {
       return true;
     }
     if (document.getElementById('gym-picker').classList.contains('open')) {
-      document.getElementById('gym-picker').classList.remove('open');
+      closeGymPicker();
       return true;
     }
     if (document.getElementById('timer-overlay').classList.contains('open')) {
@@ -2447,43 +2490,108 @@ if (absDiff < 0.15) {
     renderPresetEditorList();
   }
 
-  let gymPickerCatFilter = null; // null=全て表示
+  let gymPickerCatFilter = null;
+  let pickerDragState = null;
 
   function filterGymPicker() {
     const q = document.getElementById('gym-picker-search').value.toLowerCase();
     const el = document.getElementById('gym-picker-list');
+    const presets = gymPresets || GYM_PRESETS;
+    const cats = Object.keys(presets);
     let html = '';
 
     // カテゴリフィルターボタン
-    const cats = Object.keys(gymPresets || GYM_PRESETS);
-    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-      <button onclick="setGymPickerCat(null)" style="padding:4px 10px;border-radius:12px;border:1px solid ${gymPickerCatFilter===null?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===null?'var(--accent)':'transparent'};color:${gymPickerCatFilter===null?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">すべて</button>
-      ${cats.map(c=>`<button onclick="setGymPickerCat('${c}')" style="padding:4px 10px;border-radius:12px;border:1px solid ${gymPickerCatFilter===c?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===c?'var(--accent)':'transparent'};color:${gymPickerCatFilter===c?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">${c}</button>`).join('')}
+    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
+      <button onclick="setGymPickerCat(null)" style="padding:5px 12px;border-radius:14px;border:1px solid ${gymPickerCatFilter===null?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===null?'var(--accent)':'transparent'};color:${gymPickerCatFilter===null?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">すべて</button>
+      ${cats.map(c=>`<button onclick="setGymPickerCat('${c}')" style="padding:5px 12px;border-radius:14px;border:1px solid ${gymPickerCatFilter===c?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===c?'var(--accent)':'transparent'};color:${gymPickerCatFilter===c?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">${c}</button>`).join('')}
     </div>`;
 
+    const displayCats = gymPickerCatFilter ? [gymPickerCatFilter] : cats;
+
     // カスタム種目
-    const filteredCustom = customGymExercises.filter(p => (!q || p.toLowerCase().includes(q)));
-    if (filteredCustom.length > 0 && !gymPickerCatFilter) {
-      html += '<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:6px;">⭐ マイ種目</div>';
-      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${filteredCustom.map(p => `<button class="gym-picker-item" style="border-color:rgba(232,255,0,0.3);color:var(--accent);" onclick="gymAddExercise('${p}')">${p}</button>`).join('')}</div>`;
+    if (!gymPickerCatFilter) {
+      const filteredCustom = customGymExercises.filter(p => !q || p.toLowerCase().includes(q));
+      if (filteredCustom.length > 0) {
+        html += `<div style="padding:10px 16px 6px;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;">⭐ マイ種目</div>`;
+        html += filteredCustom.map(p => `
+          <button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')">
+            <span>${p}</span>
+          </button>`).join('');
+      }
     }
 
-    // カテゴリ別プリセット
-    const presets = gymPresets || GYM_PRESETS;
-    const displayCats = gymPickerCatFilter ? [gymPickerCatFilter] : cats;
+    // カテゴリ別種目（カテゴリヘッダー＋縦リスト）
     displayCats.forEach(cat => {
       const items = (presets[cat] || []).filter(p => !q || p.toLowerCase().includes(q));
       if (items.length === 0) return;
-      html += `<div style="font-size:10px;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:6px;">${cat}</div>`;
-      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${items.map(p=>`<button class="gym-picker-item" onclick="gymAddExercise('${p}')">${p}</button>`).join('')}</div>`;
+
+      html += `<div style="display:flex;align-items:center;padding:10px 16px;background:var(--accent);">
+        <span style="font-size:13px;font-weight:700;color:var(--bg);">${cat}</span>
+      </div>`;
+
+      html += items.map((p, i) => `
+        <button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')">
+          <span style="flex:1;text-align:left;">${p}</span>
+          <span class="gym-picker-item-drag" onpointerdown="pickerDragStart(event,'${cat}',${i})" onclick="event.stopPropagation()">☰</span>
+        </button>`).join('');
     });
 
-    el.innerHTML = html || '<div style="color:var(--text-muted);padding:16px;text-align:center;">該当なし</div>';
+    if (!html.includes('gym-picker-item')) {
+      html += '<div style="color:var(--text-muted);padding:32px;text-align:center;">該当なし</div>';
+    }
+
+    el.innerHTML = html;
   }
 
   function setGymPickerCat(cat) {
     gymPickerCatFilter = cat;
     filterGymPicker();
+  }
+
+  // ピッカー内ドラッグ並び替え
+  function pickerDragStart(e, cat, fromIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+
+    const timer = setTimeout(() => {
+      if (navigator.vibrate) navigator.vibrate(30);
+      pickerDragState = {cat, fromIdx, curIdx: fromIdx};
+
+      function onMove(ev) {
+        const y = ev.clientY;
+        const presets = gymPresets || GYM_PRESETS;
+        const items = document.querySelectorAll('#gym-picker-list .gym-picker-item');
+        items.forEach((el, i) => {
+          const rect = el.getBoundingClientRect();
+          if (y >= rect.top && y <= rect.bottom) {
+            pickerDragState.curIdx = i;
+          }
+        });
+      }
+
+      function onEnd() {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onEnd);
+        if (pickerDragState && pickerDragState.fromIdx !== pickerDragState.curIdx) {
+          gymPresets = gymPresets || JSON.parse(JSON.stringify(GYM_PRESETS));
+          const items = gymPresets[cat];
+          if (items) {
+            const item = items.splice(pickerDragState.fromIdx, 1)[0];
+            const toIdx = Math.max(0, Math.min(pickerDragState.curIdx, items.length));
+            items.splice(toIdx, 0, item);
+            localStorage.setItem('gym_presets', JSON.stringify(gymPresets));
+            filterGymPicker();
+          }
+        }
+        pickerDragState = null;
+      }
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onEnd, {once:true});
+    }, 250);
+
+    e.target.addEventListener('pointerup', () => clearTimeout(timer), {once:true});
   }
 
   function addCustomGymExercise() {
