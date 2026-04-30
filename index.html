@@ -644,8 +644,8 @@
 </div>
 
 <!-- GYM PRESET EDITOR -->
-<div class="gym-exercise-picker" id="gym-preset-editor" onclick="handleGymPresetEditorOverlay(event)">
-  <div class="gym-picker-sheet" style="max-height:85vh;overflow-y:auto;">
+<div class="activity-picker-overlay" id="gym-preset-editor" onclick="handleGymPresetEditorOverlay(event)" style="z-index:110;">
+  <div class="activity-picker-sheet" style="max-height:85vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div class="gym-picker-title" style="margin:0;">種目を編集</div>
       <button onclick="closeGymPresetEditor()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
