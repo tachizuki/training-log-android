@@ -2490,7 +2490,6 @@ if (absDiff < 0.15) {
   }
 
   let gymPickerCatFilter = null;
-  let pickerDragState = null;
 
   function filterGymPicker() {
     const q = document.getElementById('gym-picker-search').value.toLowerCase();
@@ -2500,39 +2499,33 @@ if (absDiff < 0.15) {
     let html = '';
 
     // カテゴリフィルターボタン
-    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
-      <button onclick="setGymPickerCat(null)" style="padding:5px 12px;border-radius:14px;border:1px solid ${gymPickerCatFilter===null?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===null?'var(--accent)':'transparent'};color:${gymPickerCatFilter===null?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">すべて</button>
-      ${cats.map(c=>`<button onclick="setGymPickerCat('${c}')" style="padding:5px 12px;border-radius:14px;border:1px solid ${gymPickerCatFilter===c?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===c?'var(--accent)':'transparent'};color:${gymPickerCatFilter===c?'var(--bg)':'var(--text-muted)'};font-size:12px;cursor:pointer;">${c}</button>`).join('')}
-    </div>`;
-
-    const displayCats = gymPickerCatFilter ? [gymPickerCatFilter] : cats;
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);">';
+    html += `<button onclick="setGymPickerCat(null)" style="padding:5px 12px;border-radius:14px;font-size:12px;cursor:pointer;border:1px solid ${gymPickerCatFilter===null?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===null?'var(--accent)':'transparent'};color:${gymPickerCatFilter===null?'var(--bg)':'var(--text-muted)'};">すべて</button>`;
+    cats.forEach(c => {
+      html += `<button onclick="setGymPickerCat('${c}')" style="padding:5px 12px;border-radius:14px;font-size:12px;cursor:pointer;border:1px solid ${gymPickerCatFilter===c?'var(--accent)':'var(--border)'};background:${gymPickerCatFilter===c?'var(--accent)':'transparent'};color:${gymPickerCatFilter===c?'var(--bg)':'var(--text-muted)'};">${c}</button>`;
+    });
+    html += '</div>';
 
     // カスタム種目
     if (!gymPickerCatFilter) {
-      const filteredCustom = customGymExercises.filter(p => !q || p.toLowerCase().includes(q));
-      if (filteredCustom.length > 0) {
-        html += `<div style="padding:10px 16px 6px;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;">⭐ マイ種目</div>`;
-        html += filteredCustom.map(p => `
-          <button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')">
-            <span>${p}</span>
-          </button>`).join('');
+      const fc = customGymExercises.filter(p => !q || p.toLowerCase().includes(q));
+      if (fc.length > 0) {
+        html += '<div style="padding:10px 16px 6px;font-size:11px;color:var(--accent);letter-spacing:0.15em;font-weight:700;">⭐ マイ種目</div>';
+        fc.forEach(p => {
+          html += `<button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')"><span>${p}</span></button>`;
+        });
       }
     }
 
-    // カテゴリ別種目（カテゴリヘッダー＋縦リスト）
-    displayCats.forEach(cat => {
+    // カテゴリ別プリセット
+    const displayCats = gymPickerCatFilter ? [gymPickerCatFilter] : cats;
+    displayCats.forEach((cat, ci) => {
       const items = (presets[cat] || []).filter(p => !q || p.toLowerCase().includes(q));
       if (items.length === 0) return;
-
-      html += `<div style="display:flex;align-items:center;padding:10px 16px;background:var(--accent);">
-        <span style="font-size:13px;font-weight:700;color:var(--bg);">${cat}</span>
-      </div>`;
-
-      html += items.map((p, i) => `
-        <button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')">
-          <span style="flex:1;text-align:left;">${p}</span>
-          <span class="gym-picker-item-drag" onpointerdown="pickerDragStart(event,'${cat}',${i})" onclick="event.stopPropagation()">☰</span>
-        </button>`).join('');
+      html += `<div style="padding:10px 16px;background:var(--accent);"><span style="font-size:13px;font-weight:700;color:var(--bg);">${cat}</span></div>`;
+      items.forEach((p, i) => {
+        html += `<button class="gym-picker-item" onclick="gymAddExercise('${p.replace(/'/g,"\'")}')"><span style="flex:1;text-align:left;">${p}</span><span class="gym-picker-item-drag" onpointerdown="pickerDragStart(event,'${cat}',${i})" onclick="event.stopPropagation()">☰</span></button>`;
+      });
     });
 
     if (!html.includes('gym-picker-item')) {
