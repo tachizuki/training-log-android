@@ -334,13 +334,13 @@
   .gym-sw-btn.start { background: var(--success); color: var(--bg); }
   .gym-sw-btn.stop { background: var(--danger); color: white; }
   .gym-sw-btn.reset { background: var(--surface2); color: var(--text-muted); }
-  .gym-exercise-picker { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 60; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .gym-exercise-picker { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .gym-exercise-picker.open { opacity: 1; pointer-events: all; }
   .gym-picker-sheet { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0; overflow: hidden; }
   .gym-picker-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 14px; }
   .gym-picker-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; }
   .gym-picker-input:focus { border-color: var(--accent); }
-  .gym-picker-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 180px; overflow-y: auto; }
+  .gym-picker-list { flex: 1; overflow-y: auto; }
   .gym-picker-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; cursor: pointer; width: 100%; text-align: left; border-radius: 0; border-left: none; border-right: none; border-top: none; }
   .gym-picker-item:active { background: var(--surface); }
   .gym-picker-item-drag { color: var(--text-muted); font-size: 20px; cursor: grab; padding: 4px 12px; touch-action: none; user-select: none; }
