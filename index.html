@@ -340,7 +340,7 @@
   .gym-picker-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 14px; }
   .gym-picker-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 12px; }
   .gym-picker-input:focus { border-color: var(--accent); }
-  .gym-picker-list { flex: 1; overflow-y: auto; }
+  .gym-picker-list { flex: 1; overflow-y: auto; padding-bottom: 80px; }
   .gym-picker-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; cursor: pointer; width: 100%; text-align: left; border-radius: 0; border-left: none; border-right: none; border-top: none; }
   .gym-picker-item:active { background: var(--surface); }
   .gym-picker-item-drag { color: var(--text-muted); font-size: 20px; cursor: grab; padding: 4px 12px; touch-action: none; user-select: none; }
@@ -605,7 +605,7 @@
     </div>
     <div id="gym-exercise-list"></div>
     <button class="gym-add-exercise-btn" onclick="openGymPicker()">＋ 種目を追加</button>
-    <button class="gym-save-btn" onclick="saveGym()">保存する</button>
+    <button class="gym-save-btn" onclick="saveGym()">← 戻る（自動保存済み）</button>
   </div>
 </div>
 
@@ -620,12 +620,12 @@
     </div>
     <!-- 検索 -->
     <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
-      <input type="text" class="gym-picker-input" id="gym-picker-search" placeholder="種目を検索..." oninput="filterGymPicker()" style="margin:0;">
+      <input type="text" class="gym-picker-input" id="gym-picker-search" placeholder="種目を検索..." oninput="filterGymPicker()" onfocus="this.scrollIntoView({behavior:'smooth'})" style="margin:0;">
     </div>
     <!-- 種目リスト -->
     <div class="gym-picker-list" id="gym-picker-list"></div>
-    <!-- カスタム追加 -->
-    <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);">
+    <!-- カスタム追加（キーボード上部に固定） -->
+    <div style="position:sticky;bottom:0;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);">
       <button class="gym-picker-custom-btn" onclick="addCustomGymExercise()">入力した名前で追加</button>
     </div>
   </div>
@@ -695,7 +695,7 @@
   <img id="share-img-fallback" style="display:none;max-width:100%;border-radius:8px;margin-bottom:12px;" alt="長押しで保存">
   <div class="share-btns">
     <button class="share-btn download" onclick="downloadShareImage()">📤 保存・共有</button>
-    <button class="share-btn cancel" onclick="document.getElementById('share-overlay').classList.remove('open');document.getElementById('share-img-fallback').style.display='none';">閉じる</button>
+    <button class="share-btn cancel" onclick="document.getElementById('share-overlay').classList.remove('open');document.getElementById('share-img-fallback').style.display='none';showScreen(null);">閉じる</button>
   </div>
 </div>
 <!-- VIEW SCREEN -->
@@ -1989,18 +1989,19 @@ if (absDiff < 0.15) {
     } else {
       gymExercises[ei].sets[si][field] = val;
     }
-    // 1RM表示だけ更新（再レンダリングしないのでフォーカスが外れない）
     if (field === 'weight' || field === 'reps') {
       const s = gymExercises[ei].sets[si];
       const rm = calcRM(s.weight, s.reps);
       const rmEl = document.getElementById(`gs-${ei}-${si}-rm`);
       if (rmEl) rmEl.textContent = rm ? rm+'kg' : '—';
     }
+    autoSaveGym();
   }
 
   function gymToggleAssist(ei, si) {
     gymExercises[ei].sets[si].assist = !gymExercises[ei].sets[si].assist;
     renderGymExercises();
+    autoSaveGym();
   }
 
   function gymAddSet(ei) {
@@ -2210,17 +2211,28 @@ if (absDiff < 0.15) {
   function gymDelSet(ei, si) {
     gymExercises[ei].sets.splice(si,1);
     renderGymExercises();
+    autoSaveGym();
   }
 
   function gymDelExercise(ei) {
     gymExercises.splice(ei,1);
     renderGymExercises();
+    autoSaveGym();
   }
 
   function gymAddExercise(name) {
     gymExercises.push({name, sets:[{weight:null,reps:null,assist:false,memo:''}]});
     renderGymExercises();
+    autoSaveGym();
     document.getElementById('gym-picker').classList.remove('open');
+  }
+
+  function autoSaveGym() {
+    if (gymExercises.length === 0) return;
+    const key = getGymKey();
+    if (!gymData[key]) gymData[key] = {};
+    gymData[key].exercises = JSON.parse(JSON.stringify(gymExercises));
+    localStorage.setItem('gym_data', JSON.stringify(gymData));
   }
 
   function saveGym() {
@@ -2263,8 +2275,11 @@ if (absDiff < 0.15) {
       localStorage.setItem('training_records', JSON.stringify(records));
     }
 
+    // 保存後にシェア画面を起動してからトップに戻る
     showToast('保存しました ✓', false);
-    setTimeout(() => showScreen(null), 600);
+    setTimeout(() => {
+      gymShare();
+    }, 300);
   }
 
   // 前回コピー
@@ -2339,10 +2354,15 @@ if (absDiff < 0.15) {
   }
 
   function openGymPicker() {
+    gymPickerCatFilter = null;
     document.getElementById('gym-picker').classList.add('open');
     document.getElementById('gym-picker-search').value = '';
     filterGymPicker();
-    // autoFocus無効
+  }
+
+  function closeGymPicker() {
+    document.getElementById('gym-picker').classList.remove('open');
+    if (window._editActivityMode) window._editActivityMode = false;
   }
 
   function handleGymPickerOverlay(e) {
