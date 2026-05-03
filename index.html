@@ -694,8 +694,8 @@
   <div class="share-canvas-wrap" style="max-height:60vh;overflow-y:auto;width:100%;"><canvas id="share-canvas" style="width:100%;height:auto;display:block;"></canvas></div>
   <img id="share-img-fallback" style="display:none;max-width:100%;border-radius:8px;margin-bottom:12px;" alt="長押しで保存">
   <div class="share-btns">
-    <button class="share-btn download" onclick="downloadShareImage()">📤 保存・共有</button>
-    <button class="share-btn cancel" onclick="document.getElementById('share-overlay').classList.remove('open');document.getElementById('share-img-fallback').style.display='none';showScreen(null);">閉じる</button>
+    <button class="share-btn download" onclick="shareImage()">📤 シェアする</button>
+    <button class="share-btn cancel" onclick="document.getElementById('share-overlay').classList.remove('open');document.getElementById('share-img-fallback').style.display='none';showScreen(null);">スキップ</button>
   </div>
 </div>
 <!-- VIEW SCREEN -->
@@ -1832,13 +1832,19 @@ if (absDiff < 0.15) {
     return null;
   }
 
-  // 1RM計算 (Epley式)
-  function calcRM(weight, reps) {
+  // FWJ RM換算式
+  // ベンチプレス: 重量 × 回数 ÷ 40 + 重量
+  // スクワット・デッドリフト: 重量 × 回数 ÷ 33.3 + 重量
+  const SQUAT_DEADLIFT_KEYWORDS = ['スクワット','デッドリフト','レッグプレス','ブルガリアン','ハック','ルーマニアン'];
+
+  function calcRM(weight, reps, exerciseName) {
     if (!weight || !reps || reps <= 0) return null;
     if (reps === 1) return weight;
-    if (reps > 20) return null; // 20rep超は1RM推定精度が低い
-    // Brzycki式: weight / (1.0278 - 0.0278 * reps)
-    return Math.round((weight / (1.0278 - 0.0278 * reps)) * 10) / 10;
+    if (reps > 12) return null; // 換算表は12repまで
+    const isSquatDL = exerciseName &&
+      SQUAT_DEADLIFT_KEYWORDS.some(k => exerciseName.includes(k));
+    const divisor = isSquatDL ? 33.3 : 40;
+    return Math.round((weight * reps / divisor + weight) * 10) / 10;
   }
 
   function renderGym() {
@@ -1936,7 +1942,7 @@ if (absDiff < 0.15) {
           <span class="gym-set-header-label">補</span>
         </div>`;
       const setsHTML = ex.sets.map((s, si) => {
-        const rm = calcRM(s.weight, s.reps);
+        const rm = calcRM(s.weight, s.reps, ex.name);
         const rmText = rm ? rm+'kg' : '—';
         const assistClass = s.assist ? 'on' : '';
         return `
@@ -1991,7 +1997,7 @@ if (absDiff < 0.15) {
     }
     if (field === 'weight' || field === 'reps') {
       const s = gymExercises[ei].sets[si];
-      const rm = calcRM(s.weight, s.reps);
+      const rm = calcRM(s.weight, s.reps, ex.name);
       const rmEl = document.getElementById(`gs-${ei}-${si}-rm`);
       if (rmEl) rmEl.textContent = rm ? rm+'kg' : '—';
     }
@@ -2275,6 +2281,37 @@ if (absDiff < 0.15) {
       localStorage.setItem('training_records', JSON.stringify(records));
     }
 
+    // ストップウォッチの時間から筋トレ消費カロリーを計算して運動記録に追加
+    // 時間計測がない場合は60分をデフォルトとして使用
+    const gymElapsed = swElapsed > 0 ? swElapsed : 60 * 60 * 1000;
+    if (gymExercises.length > 0) {
+      const hours = gymElapsed / 1000 / 3600;
+      const weight = records.find(r => r.date === gymDate)?.weight || 63;
+      const MET = 5.0; // 筋トレ標準MET
+      const gymKcal = Math.round(weight * MET * hours);
+
+      const recIdx2 = records.findIndex(r => r.date === gymDate);
+      if (recIdx2 >= 0) {
+        const activities = records[recIdx2].activities || [];
+        const existIdx = activities.findIndex(a => a.name === '筋トレ');
+        const gymActivity = {
+          name: '筋トレ',
+          icon: '💪',
+          met: MET,
+          minutes: Math.round(gymElapsed / 1000 / 60),
+          kcal: gymKcal
+        };
+        if (existIdx >= 0) {
+          activities[existIdx] = gymActivity;
+        } else {
+          activities.push(gymActivity);
+        }
+        records[recIdx2].activities = activities;
+        records[recIdx2].cardioKcal = activities.reduce((s,a) => s+(a.kcal||0), 0);
+        localStorage.setItem('training_records', JSON.stringify(records));
+      }
+    }
+
     // 保存後にシェア画面を起動してからトップに戻る
     showToast('保存しました ✓', false);
     setTimeout(() => {
@@ -2312,7 +2349,7 @@ if (absDiff < 0.15) {
 
     const setsEl = document.getElementById('gym-prev-sets');
     setsEl.innerHTML = prev.sets.map((s, i) => {
-      const rm = calcRM(s.weight, s.reps);
+      const rm = calcRM(s.weight, s.reps, ex.name);
       return `<div class="gym-prev-set-row">
         <span class="gym-prev-set-num">${i+1}</span>
         <span class="gym-prev-set-val">${s.weight||'—'}kg × ${s.reps||'—'}rep</span>
@@ -2560,50 +2597,76 @@ if (absDiff < 0.15) {
     filterGymPicker();
   }
 
-  // ピッカー内ドラッグ並び替え
+  // ピッカー内ドラッグ並び替え（即時・ハイライト表示）
   function pickerDragStart(e, cat, fromIdx) {
     e.preventDefault();
     e.stopPropagation();
-    const startY = e.clientY;
+    if (navigator.vibrate) navigator.vibrate(20);
 
-    const timer = setTimeout(() => {
-      if (navigator.vibrate) navigator.vibrate(30);
-      pickerDragState = {cat, fromIdx, curIdx: fromIdx};
+    pickerDragState = {cat, fromIdx, curIdx: fromIdx};
 
-      function onMove(ev) {
-        const y = ev.clientY;
-        const presets = gymPresets || GYM_PRESETS;
-        const items = document.querySelectorAll('#gym-picker-list .gym-picker-item');
-        items.forEach((el, i) => {
-          const rect = el.getBoundingClientRect();
-          if (y >= rect.top && y <= rect.bottom) {
-            pickerDragState.curIdx = i;
-          }
-        });
-      }
+    // ドラッグ中の行をハイライト
+    const allItems = [...document.querySelectorAll('#gym-picker-list .gym-picker-item')];
+    const dragItem = allItems[fromIdx];
+    if (dragItem) dragItem.style.background = 'rgba(232,255,0,0.15)';
 
-      function onEnd() {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onEnd);
-        if (pickerDragState && pickerDragState.fromIdx !== pickerDragState.curIdx) {
-          gymPresets = gymPresets || JSON.parse(JSON.stringify(GYM_PRESETS));
-          const items = gymPresets[cat];
-          if (items) {
-            const item = items.splice(pickerDragState.fromIdx, 1)[0];
-            const toIdx = Math.max(0, Math.min(pickerDragState.curIdx, items.length));
-            items.splice(toIdx, 0, item);
-            localStorage.setItem('gym_presets', JSON.stringify(gymPresets));
-            filterGymPicker();
-          }
+    function onMove(ev) {
+      const y = ev.clientY;
+      const items = [...document.querySelectorAll('#gym-picker-list .gym-picker-item')];
+
+      // 全アイテムのハイライトをリセット
+      items.forEach((el, i) => {
+        if (i === pickerDragState.fromIdx) {
+          el.style.background = 'rgba(232,255,0,0.15)';
+          el.style.borderBottom = '';
+        } else {
+          el.style.background = '';
+          el.style.borderBottom = '';
         }
-        pickerDragState = null;
+      });
+
+      // ターゲット行を特定してボーダーで示す
+      let targetIdx = pickerDragState.fromIdx;
+      items.forEach((el, i) => {
+        const rect = el.getBoundingClientRect();
+        if (y >= rect.top && y <= rect.bottom && i !== pickerDragState.fromIdx) {
+          targetIdx = i;
+          // 上半分なら上に、下半分なら下にボーダー
+          const mid = rect.top + rect.height / 2;
+          el.style.borderBottom = y < mid ? '' : '2px solid var(--accent)';
+          el.style.borderTop = y < mid ? '2px solid var(--accent)' : '';
+        }
+      });
+      pickerDragState.curIdx = targetIdx;
+    }
+
+    function onEnd() {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onEnd);
+
+      // スタイルリセット
+      document.querySelectorAll('#gym-picker-list .gym-picker-item').forEach(el => {
+        el.style.background = '';
+        el.style.borderTop = '';
+        el.style.borderBottom = '';
+      });
+
+      if (pickerDragState && pickerDragState.fromIdx !== pickerDragState.curIdx) {
+        gymPresets = gymPresets || JSON.parse(JSON.stringify(GYM_PRESETS));
+        const items = gymPresets[cat];
+        if (items) {
+          const item = items.splice(pickerDragState.fromIdx, 1)[0];
+          const toIdx = Math.max(0, Math.min(pickerDragState.curIdx, items.length));
+          items.splice(toIdx, 0, item);
+          localStorage.setItem('gym_presets', JSON.stringify(gymPresets));
+          filterGymPicker();
+        }
       }
+      pickerDragState = null;
+    }
 
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onEnd, {once:true});
-    }, 250);
-
-    e.target.addEventListener('pointerup', () => clearTimeout(timer), {once:true});
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onEnd, {once:true});
   }
 
   function addCustomGymExercise() {
@@ -2799,7 +2862,7 @@ if (absDiff < 0.15) {
       y += lineH * 0.8;
 
       (ex.sets || []).forEach((s, si) => {
-        const rm = calcRM(s.weight, s.reps);
+        const rm = calcRM(s.weight, s.reps, ex.name);
         ctx.fillStyle = '#f0f0f0';
         ctx.font = '16px sans-serif';
         ctx.fillText(`${si + 1}`, padding + 10, y + 16);
